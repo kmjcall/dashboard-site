@@ -6,19 +6,1214 @@
   <title>투자사업팀 대시보드</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
   <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-  </style>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }</style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" src="./dashboard.jsx"></script>
   <script type="text/babel">
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(App));
+const { useState, useMemo, useCallback, useRef } = React;
+const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LabelList } = Recharts;
+const XLSX = window.XLSX;
+
+
+
+const SEED_PROJECTS = [{"id": 1, "name": "㈜에스제이투자파트너스", "target": "", "strategic": true, "invest_year": "2017", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "금융투자사", "fund_type": "", "manager": "", "share_type": "", "invest_corp": "우미글로벌", "contracted": -80.0, "invested": -80.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 17.9, "total_recovered": 17.9, "unrecovered": -62.1, "note": "", "subcategory": "기타", "invest_quarter": "Q1"}, {"id": 2, "name": "HLB사이언스 (단디바이오사이언스)", "target": "", "strategic": false, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.21698, "invested": -10.21698, "remaining": 0.0, "principal_recovered": 6.76292211, "profit": 8.553748070000001, "total_recovered": 15.316670180000001, "unrecovered": 0.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 3, "name": "임재철 변호사 개인 대여", "target": "", "strategic": true, "invest_year": "2016", "liquidation": "", "domestic": "국내", "invest_type": "미분류", "invest_method": "대여", "category": "기타개인", "fund_type": "", "manager": "", "share_type": "", "invest_corp": "우미산업개발 (구 선우산업)", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.9212602699999999, "total_recovered": 0.9212602699999999, "unrecovered": -9.07873973, "note": "", "subcategory": "기타", "invest_quarter": "Q1"}, {"id": 4, "name": "에스제이뉴챌린지 재기지원 펀드", "target": "", "strategic": false, "invest_year": "2018", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스제이", "share_type": "", "invest_corp": "명일건설", "contracted": -65.0, "invested": -65.0, "remaining": 0.0, "principal_recovered": 27.844, "profit": 10.2, "total_recovered": 38.044, "unrecovered": -26.956000000000003, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 5, "name": "대성글로벌 위너 청년창업펀드", "target": "", "strategic": false, "invest_year": "2017", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스제이", "share_type": "", "invest_corp": "명일건설", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 4.35833334, "profit": 2.18614876, "total_recovered": 6.5444821, "unrecovered": 0.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 6, "name": "케이비-에스제이 관광벤처펀드", "target": "", "strategic": false, "invest_year": "2018", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스제이", "share_type": "", "invest_corp": "명일건설", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 18.48, "profit": 7.4058449600000005, "total_recovered": 25.88584496, "unrecovered": 0.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 7, "name": "퓨처리딩바이오펀드", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스엠비", "share_type": "", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 3.5, "profit": 18.44, "total_recovered": 21.94, "unrecovered": 0.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 8, "name": "전북-에스제이 퍼스트무버 벤처펀드", "target": "", "strategic": false, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스제이", "share_type": "", "invest_corp": "우미글로벌", "contracted": -30.0, "invested": -30.0, "remaining": 0.0, "principal_recovered": 1.8, "profit": 0.0, "total_recovered": 1.8, "unrecovered": -28.2, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 9, "name": "데일리 골든아워 바이오 헬스케어 펀드 2호", "target": "", "strategic": false, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "데일리파트너스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 10, "name": "프롭테크 워터링 펀드(Proptech Watering)", "target": "", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "공간테크", "fund_type": "블라인드", "manager": "브리즈인베", "share_type": "", "invest_corp": "명선종합건설", "contracted": -100.0, "invested": -100.0, "remaining": 0.0, "principal_recovered": 14.51786585, "profit": 16.27542683, "total_recovered": 30.79329268, "unrecovered": -69.20670731999999, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 11, "name": "에스제이 퍼스트무버 벤처펀드 제2호", "target": "", "strategic": false, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스제이", "share_type": "", "invest_corp": "우미산업개발", "contracted": -90.0, "invested": -90.0, "remaining": 0.0, "principal_recovered": 32.06, "profit": 0.0, "total_recovered": 32.06, "unrecovered": -57.94, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 12, "name": "신한-케이클라비스퍼스트무버 제1호", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "케이클라비스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 1.02430967, "profit": 0.61246452, "total_recovered": 1.6367741900000001, "unrecovered": -8.36322581, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 13, "name": "에스제이 관광벤처조합 제3호", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "에스제이", "share_type": "", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 2.4, "profit": 0.0, "total_recovered": 2.4, "unrecovered": -17.6, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 14, "name": "아이비케이씨-데일리 바이오 헬스케어 펀드 1호", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "데일리파트너스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.25754493, "profit": 0.0, "total_recovered": 0.25754493, "unrecovered": -4.74245507, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 15, "name": "케이클라비스-CL 신기술조합 제11호", "target": "메디오젠", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -0.5, "invested": -0.5, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -0.5, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 16, "name": "케이클라비스-CL 신기술조합 제12호", "target": "지아이셀", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -1.0, "invested": -1.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 17, "name": "케이클라비스 신기술조합 제22호", "target": "지아이바이옴", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 18, "name": "케이클라비스 신기술조합 제23호", "target": "와이바이오로직스", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -1.0, "invested": -1.0, "remaining": 0.0, "principal_recovered": 1.0, "profit": 0.26790912, "total_recovered": 1.2679091200000001, "unrecovered": 0.0, "note": "2025.11 청산", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 19, "name": "케이클라비스 신기술조합 제26호", "target": "Coimmune,Inc(美)", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -2.0, "invested": -2.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -2.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 20, "name": "케이클라비스-넥스트랜스 신기술조합 제1호", "target": "Hyperfine Research㈜", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -1.0, "invested": -1.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 21, "name": "케이클라비스 신기술조합 제27호", "target": "에스엘백시젠", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -2.0, "invested": -2.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -2.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 22, "name": "케이클라비스 신기술조합 제31호", "target": "한국신용데이터", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 23, "name": "케이클라비스 신기술조합 제33호", "target": "미코세라믹스", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 4.655059209999999, "profit": 5.3376442299999995, "total_recovered": 9.99270344, "unrecovered": -0.0072965600000003406, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 24, "name": "케이클라비스 신기술조합 제10호", "target": "中AffaMed Therapeutics", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 25, "name": "케이클라비스-넥스트랜스 신기술조합 제3호", "target": "美Tesseract Health", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -1.0, "invested": -1.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 26, "name": "케이클라비스-넥스트랜스 신기술조합 제2호", "target": "Lifecanvas Technologies", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -1.0, "invested": -1.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 27, "name": "케이클라비스 신기술조합 제40호", "target": "파노로스바이오사이언스", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -1.5, "invested": -1.5, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.5, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 28, "name": "케이클라비스 신기술조합 제44호", "target": "에스엘백시젠", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -2.0, "invested": -2.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -2.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 29, "name": "넥스텍 제3호 신기술사업투자조합", "target": "NuScale Power", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "SBP (3GP)", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 5.0, "profit": 1.2988337200000002, "total_recovered": 6.29883372, "unrecovered": 0.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 30, "name": "케이클라비스-넥스트 바이오 신기술조합 제5호", "target": "美Kalivir, AI Therspeutics, 로킷헬스케어", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선/보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 31, "name": "인피니툼-KAI 라이프스타일1호", "target": "지애드스포츠(舊YG스포츠)", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "인피니툼", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 32, "name": "케이클라비스-모자이크 신기술조합 제1호", "target": "다원메닥스", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 33, "name": "크레비스임팩트인게이지먼트1호PEF", "target": "학산(테라로사)", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "크레비스", "share_type": "보통주", "invest_corp": "우미산업개발", "contracted": -88.0, "invested": -88.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -88.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 34, "name": "지디씨유 투자조합", "target": "메가존클라우드", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "델타인베 (2GP)", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 35, "name": "킨포크아이피㈜", "target": "", "strategic": true, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 36, "name": "그린에너지신기술사업투자조합", "target": "NuScale Power", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "동유인베 (3GP)", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -100.0, "invested": -100.0, "remaining": 0.0, "principal_recovered": 99.27, "profit": 38.84, "total_recovered": 138.0651533, "unrecovered": 0.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 37, "name": "KIP 한국투자파트너스 동남아벤처펀드 제1호", "target": "", "strategic": false, "invest_year": "2023", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "한투파", "share_type": "", "invest_corp": "우미글로벌", "contracted": -64.993, "invested": -23.521250000000002, "remaining": -41.47174999999999, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -23.521250000000002, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 38, "name": "우미-국보디자인 초기프롭테크 합자조합1호", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "공간테크", "fund_type": "블라인드", "manager": "더인벤션랩", "share_type": "", "invest_corp": "우미글로벌", "contracted": -4.0, "invested": -4.0, "remaining": 0.0, "principal_recovered": 2.0, "profit": 0.79447332, "total_recovered": 2.79447332, "unrecovered": -1.2055266800000002, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 39, "name": "나우 소부장 펀드 1호", "target": "", "strategic": true, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "나우IB", "share_type": "", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -14.7, "remaining": -5.300000000000001, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -14.7, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 40, "name": "Woomi USA 출자(Primer Sazze Fund Ⅰ)", "target": "", "strategic": false, "invest_year": "2019", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "PrimerSazze", "share_type": "", "invest_corp": "우미USA", "contracted": -11.8, "invested": -11.8, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -11.8, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 41, "name": "Woomi USA 출자(Primer Sazze Fund Ⅱ)", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "PrimerSazze", "share_type": "", "invest_corp": "우미USA", "contracted": -39.01649, "invested": -39.01649, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -39.01649, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 42, "name": "Woomi USA 출자(Strong Seed Fund IV)", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "스트롱벤처스", "share_type": "", "invest_corp": "우미USA", "contracted": -38.9413, "invested": -34.14586, "remaining": -4.795439999999999, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -34.14586, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 43, "name": "Woomi USA 출자(Fifth Wall Early-Stage Ventures)", "target": "", "strategic": false, "invest_year": "2023", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "공간테크", "fund_type": "블라인드", "manager": "FifthWall", "share_type": "", "invest_corp": "우미USA", "contracted": -29.65268227, "invested": -18.146722974, "remaining": -11.505959296, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -18.146722974, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 44, "name": "이노팜", "target": "", "strategic": true, "invest_year": "2017", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "손상차손 반영", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 45, "name": "포시즌캐피탈파트너스", "target": "", "strategic": true, "invest_year": "2018", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "금융투자사", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "명일건설", "contracted": -1.0, "invested": -1.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.0, "note": "", "subcategory": "기타", "invest_quarter": "Q1"}, {"id": 46, "name": "OTD코퍼레이션", "target": "", "strategic": true, "invest_year": "2018", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "명일건설", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 47, "name": "집펀드", "target": "", "strategic": true, "invest_year": "2018", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -2.0, "invested": -2.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -2.0, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 48, "name": "스페이스워크", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선/보통주", "invest_corp": "우미글로벌", "contracted": -10.7, "invested": -10.7, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.7, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 49, "name": "미스터홈즈 ㈜홈즈컴퍼니", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -85.0, "invested": -85.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -85.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 50, "name": "스테이즈", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -25.0, "invested": -25.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -25.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 51, "name": "큐픽스", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선/보통주", "invest_corp": "우미글로벌", "contracted": -35.4, "invested": -35.4, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -35.4, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 52, "name": "두꺼비세상 (아파트너 피인수)", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 53, "name": "어반베이스", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -15.0, "invested": -15.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -15.0, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 54, "name": "아프로텍", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "손상차손 반영", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 55, "name": "직방", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선/보통주", "invest_corp": "우미글로벌", "contracted": -124.9, "invested": -124.9, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -124.9, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 56, "name": "광주글로벌모터스", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "기타법인", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -30.0, "invested": -30.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -30.0, "note": "", "subcategory": "기타", "invest_quarter": "Q1"}, {"id": 57, "name": "달리자 ㈜김집사", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 58, "name": "단추로끓인수프", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 59, "name": "리놀폴리텍", "target": "", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -1.5, "invested": -1.5, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -1.5, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 60, "name": "데이터노우즈", "target": "", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선/보통주", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 61, "name": "루앤스", "target": "", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -20.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 62, "name": "이강피엔씨", "target": "", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.3, "profit": 0.0, "total_recovered": 0.3, "unrecovered": -4.7, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 63, "name": "브랜디", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -7.1, "invested": -7.1, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -7.1, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 64, "name": "커넥팅더닷츠㈜", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -20.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 65, "name": "솔닥", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -20.00028005, "invested": -20.00028005, "remaining": 0.0, "principal_recovered": 0.00961265, "profit": 0.0, "total_recovered": 0.00961265, "unrecovered": -19.9906674, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 66, "name": "애니펜", "target": "", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -50.0, "invested": -50.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -50.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 67, "name": "한메소프트", "target": "", "strategic": true, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 68, "name": "창소프트아이앤아이", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -30.0, "invested": -30.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -30.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 69, "name": "리코어", "target": "", "strategic": true, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 70, "name": "웨딩북", "target": "", "strategic": true, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 0.00308291, "profit": 0.0, "total_recovered": 0.00308291, "unrecovered": -19.99691709, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 71, "name": "고퀄", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -20.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 72, "name": "공간의가치", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -20.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 73, "name": "타디스테크놀로지", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 74, "name": "SAMG엔터테인먼트", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -20.0, "invested": -20.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -20.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 75, "name": "아토스터디", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 76, "name": "에이지엠티", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 77, "name": "브이투브이", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -30.0, "invested": -30.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -30.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 78, "name": "스위트스팟", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 79, "name": "아르고스다인", "target": "", "strategic": false, "invest_year": "2022", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 80, "name": "카사 (KASA) NETWORK", "target": "", "strategic": true, "invest_year": "2019", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "공간테크", "fund_type": "", "manager": "", "share_type": "우선/보통주", "invest_corp": "우미글로벌", "contracted": -109.5275, "invested": -109.5275, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -109.5275, "note": "손상차손 반영", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 81, "name": "(유)신남방경제연구회", "target": "", "strategic": true, "invest_year": "2020", "liquidation": "", "domestic": "국내", "invest_type": "미분류", "invest_method": "직접", "category": "기타법인", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미건설", "contracted": -0.1, "invested": -0.1, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -0.1, "note": "", "subcategory": "기타", "invest_quarter": "Q1"}, {"id": 82, "name": "프라이머사제 프로젝트펀드1호", "target": "업스테이지", "strategic": false, "invest_year": "2021", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "PrimerSazze", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 83, "name": "브레인앤바이오 투자조합", "target": "㈜에임드바이오", "strategic": true, "invest_year": "2023", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "에스엠비", "share_type": "", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 84, "name": "오픈이노베이션얼라이언스 초기스타트업", "target": "", "strategic": false, "invest_year": "2023", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "공간테크", "fund_type": "블라인드", "manager": "더인벤션랩", "share_type": "", "invest_corp": "우미글로벌", "contracted": -4.5, "invested": -4.5, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -4.5, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 85, "name": "펴나니", "target": "", "strategic": true, "invest_year": "2023", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "", "invest_corp": "우미글로벌", "contracted": -15.00018, "invested": -15.00018, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -15.00018, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 86, "name": "케이클라비스 신기술 조합 51호", "target": "㈜불카누스", "strategic": false, "invest_year": "2023", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "케이클라비스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -3.0, "invested": -3.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -3.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 87, "name": "주식회사 투엘파트너스", "target": "", "strategic": true, "invest_year": "2024", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -9.999999, "invested": -9.999999, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -9.999999, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 88, "name": "Woomi USA 출자(MetaProp Ventures IV LP)", "target": "", "strategic": false, "invest_year": "2024", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "블라인드", "manager": "MetaProp", "share_type": "", "invest_corp": "우미USA", "contracted": -14.43380236, "invested": -7.033541759999999, "remaining": -7.4002606, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -7.033541759999999, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 89, "name": "주식회사 라이노스", "target": "", "strategic": true, "invest_year": "2024", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "우선주", "invest_corp": "우미글로벌", "contracted": -9.99912, "invested": -9.99912, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -9.99912, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 90, "name": "AFWP 신기술투자조합 제 15호", "target": "주식회사 아모지", "strategic": false, "invest_year": "2024", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "에이에프더블유파트너스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -10.0, "invested": -10.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 91, "name": "주식회사 케어링", "target": "", "strategic": true, "invest_year": "2024", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "보통주", "invest_corp": "우미글로벌", "contracted": -10.62886, "invested": -10.62886, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -10.62886, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 92, "name": "오픈이노베이션얼라이언스 초기스타트업투자조합 2호", "target": "", "strategic": false, "invest_year": "2024", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "공간테크", "fund_type": "블라인드", "manager": "더인벤션랩", "share_type": "", "invest_corp": "우미글로벌", "contracted": -4.75, "invested": -4.75, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -4.75, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 93, "name": "Woomi USA 출자(Primer Sazze Fund III)", "target": "", "strategic": false, "invest_year": "2025", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "", "manager": "PrimerSazze", "share_type": "", "invest_corp": "우미글로벌", "contracted": -14.721675, "invested": -6.420120000000001, "remaining": -8.301554999999999, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -6.420120000000001, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 94, "name": "Woomi USA 출자(Strong Seed Fund V)", "target": "", "strategic": false, "invest_year": "2025", "liquidation": "", "domestic": "해외", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "", "manager": "스트롱벤처스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -7.0, "invested": -2.175, "remaining": -4.825, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -2.175, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 95, "name": "오픈이노베이션얼라이언스 초기스타트업투자조합 3호", "target": "", "strategic": false, "invest_year": "2025", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "공간테크", "fund_type": "블라인드", "manager": "더인벤션랩", "share_type": "", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "", "subcategory": "공간테크", "invest_quarter": "Q1"}, {"id": 96, "name": "헬리오스디피유벤처투자조합 제1호", "target": "망고부스트", "strategic": false, "invest_year": "2025", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "간접", "category": "신사업", "fund_type": "프로젝트", "manager": "헬리오스벤처스", "share_type": "", "invest_corp": "우미글로벌", "contracted": -30.0, "invested": -30.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -30.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 97, "name": "버핏서울", "target": "", "strategic": true, "invest_year": "2025", "liquidation": "", "domestic": "국내", "invest_type": "기업", "invest_method": "직접", "category": "신사업", "fund_type": "", "manager": "", "share_type": "", "invest_corp": "우미글로벌", "contracted": -5.0, "invested": -5.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": -5.0, "note": "", "subcategory": "신사업", "invest_quarter": "Q1"}, {"id": 98, "name": "Fortitude Ventures Fund 1", "target": "", "strategic": false, "invest_year": "2026", "liquidation": "", "domestic": "해외", "invest_type": "부동산", "invest_method": "간접", "category": "부동산개발", "fund_type": "", "manager": "", "share_type": "", "invest_corp": "우미USA", "contracted": -15.0, "invested": 0.0, "remaining": 0.0, "principal_recovered": 0.0, "profit": 0.0, "total_recovered": 0.0, "unrecovered": 0.0, "note": "", "subcategory": "기타", "invest_quarter": "Q1"}];
+const SEED_ANNUAL = {"2016": {"investment": 10, "recovery": 0, "profit": 0}, "2017": {"investment": 34, "recovery": 0, "profit": 0}, "2018": {"investment": 111, "recovery": 0, "profit": 0}, "2019": {"investment": 330.50000000000006, "recovery": 0.5, "profit": 0}, "2020": {"investment": 226.6, "recovery": 1.98, "profit": 1.7200000000000002}, "2021": {"investment": 289.52750000000003, "recovery": 8.1521, "profit": 11.77807318}, "2022": {"investment": 556.94998, "recovery": 25.0486, "profit": 17.14479771}, "2023": {"investment": 73.04116981, "recovery": 13.49235718, "profit": 10.45124501}, "2024": {"investment": 88.30275387, "recovery": 119.82434290999998, "profit": 48.74336773}, "2025": {"investment": 91.16205510399999, "recovery": 54.594218860000005, "profit": 41.50250011}, "2026": {"investment": 2.198445, "recovery": 1.61097971, "profit": 0.25618358}};
+const SEED_QUARTERLY = {"2016Q1":{"investment":0,"recovery":0,"profit":0},"2016Q2":{"investment":0,"recovery":0,"profit":0},"2016Q3":{"investment":0,"recovery":0,"profit":0},"2016Q4":{"investment":80,"recovery":0,"profit":0},"2017Q1":{"investment":3085,"recovery":0,"profit":0},"2017Q2":{"investment":0,"recovery":0,"profit":160},"2017Q3":{"investment":0,"recovery":0,"profit":0},"2017Q4":{"investment":600,"recovery":0,"profit":320},"2018Q1":{"investment":3000,"recovery":0,"profit":0},"2018Q2":{"investment":900,"recovery":50,"profit":0},"2018Q3":{"investment":100,"recovery":0,"profit":0},"2018Q4":{"investment":5500,"recovery":100,"profit":270},"2019Q1":{"investment":2600,"recovery":100,"profit":0},"2019Q2":{"investment":900,"recovery":100,"profit":0},"2019Q3":{"investment":900,"recovery":0,"profit":0},"2019Q4":{"investment":1400,"recovery":400,"profit":400},"2020Q1":{"investment":5750.5,"recovery":160,"profit":0},"2020Q2":{"investment":5100,"recovery":0,"profit":320},"2020Q3":{"investment":5700,"recovery":80,"profit":0},"2020Q4":{"investment":3600,"recovery":0,"profit":270},"2021Q1":{"investment":6050,"recovery":325,"profit":0},"2021Q2":{"investment":4900,"recovery":0,"profit":400},"2021Q3":{"investment":4950,"recovery":350,"profit":0},"2021Q4":{"investment":6050,"recovery":472.4,"profit":320},"2022Q1":{"investment":7520,"recovery":585,"profit":0},"2022Q2":{"investment":2100,"recovery":0,"profit":320},"2022Q3":{"investment":2800,"recovery":429,"profit":0},"2022Q4":{"investment":4200,"recovery":273,"profit":0},"2023Q1":{"investment":3800,"recovery":2820,"profit":0},"2023Q2":{"investment":4100,"recovery":180,"profit":0},"2023Q3":{"investment":5500,"recovery":1760,"profit":0},"2023Q4":{"investment":2400,"recovery":500,"profit":0},"2024Q1":{"investment":1370.03,"recovery":800,"profit":0},"2024Q2":{"investment":627.99,"recovery":63.85,"profit":0},"2024Q3":{"investment":974.92,"recovery":4271.91,"profit":199.63},"2024Q4":{"investment":484.05,"recovery":5032.13,"profit":1071.44},"2025Q1":{"investment":300,"recovery":684.90,"profit":320},"2025Q2":{"investment":1405.61,"recovery":999.42,"profit":4694.65},"2025Q3":{"investment":3000,"recovery":558.08,"profit":863.47},"2025Q4":{"investment":253.10,"recovery":1959.71,"profit":1933.6}};
+
+const DEFAULT_PASSWORD = "woomi";
+
+const fmt = (v, dec = 1) => {
+  if (v == null || isNaN(v)) return "-";
+  return v.toFixed(dec).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
+const getIssues = (item) => {
+  const issues = [];
+  if (item.profit < 0) issues.push("🔻 손실 발생");
+  if (item.note && item.note !== "nan") issues.push("📋 " + item.note);
+  return issues;
+};
+
+const KPICard = ({ label, value, sub, color }) => (
+  <div style={{ background:"#fff", borderRadius:12, padding:"12px 24px 20px",
+    boxShadow:"0 2px 12px rgba(0,0,0,0.07)", flex:1, minWidth:0,
+    borderTop:"4px solid "+color }}>
+    <div style={{ display:"inline-block", background:color+"1a", borderRadius:6,
+      padding:"3px 10px", fontSize:11, color:color, fontWeight:700, marginBottom:10 }}>{label}</div>
+    <div style={{ fontSize:26, fontWeight:800, color:"#1a1a2e" }}>{value}</div>
+    {sub && <div style={{ fontSize:14, color:"#475569", marginTop:6, fontWeight:600 }}>{sub}</div>}
+  </div>
+);
+
+const EMPTY_ITEM = {
+  name:"", target:"", strategic:true, invest_year:"2025", liquidation:"",
+  domestic:"국내", invest_type:"기업", invest_method:"직접", category:"신사업",
+  fund_type:"", manager:"", share_type:"", invest_corp:"",
+  contracted:0, invested:0, principal_recovered:0, profit:0,
+  total_recovered:0, unrecovered:0, note:"", subcategory:"신사업", invest_quarter:"Q1"
+};
+
+// ── Login Screen ──────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin }) {
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+  const handleSubmit = () => {
+    if (pw === DEFAULT_PASSWORD) { onLogin(); }
+    else { setError(true); setShake(true); setPw(""); setTimeout(() => setShake(false), 500); }
+  };
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)",
+      display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Noto Sans KR',sans-serif" }}>
+      <style>{`
+        @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+        .shake{animation:shake 0.5s ease}
+        .login-btn:hover{background:#4338ca!important}
+        .login-input:focus{outline:none;border-color:#6366f1!important;box-shadow:0 0 0 3px rgba(99,102,241,0.2)}
+      `}</style>
+      <div className={shake?"shake":""} style={{ background:"rgba(255,255,255,0.05)", backdropFilter:"blur(20px)",
+        border:"1px solid rgba(255,255,255,0.12)", borderRadius:20, padding:"48px 40px", width:360,
+        boxShadow:"0 25px 50px rgba(0,0,0,0.4)" }}>
+        <div style={{ textAlign:"center", marginBottom:32 }}>
+          <div style={{ width:72, height:72, margin:"0 auto 16px" }}>
+            <img src="data:image/png;base64,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" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+          </div>
+          <div style={{ fontSize:11, color:"#a5b4fc", letterSpacing:3, textTransform:"uppercase", marginBottom:6 }}>투자사업팀</div>
+          <h2 style={{ margin:0, color:"#fff", fontSize:20, fontWeight:800 }}>투자자산 현황</h2>
+          <p style={{ margin:"8px 0 0", color:"#94a3b8", fontSize:13 }}>접근 권한이 필요한 페이지입니다</p>
+        </div>
+        <div style={{ marginBottom:12 }}>
+          <label style={{ display:"block", color:"#cbd5e1", fontSize:12, fontWeight:600, marginBottom:8 }}>비밀번호</label>
+          <input className="login-input" type="password" value={pw}
+            onChange={e => { setPw(e.target.value); setError(false); }}
+            onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            placeholder="비밀번호를 입력하세요"
+            style={{ width:"100%", padding:"13px 16px", borderRadius:10, fontSize:15,
+              border:error?"1.5px solid #ef4444":"1.5px solid rgba(255,255,255,0.15)",
+              background:"rgba(255,255,255,0.07)", color:"#fff", boxSizing:"border-box" }} />
+          {error && <div style={{ color:"#f87171", fontSize:12, marginTop:6 }}>🔒 비밀번호가 올바르지 않습니다</div>}
+        </div>
+        <button className="login-btn" onClick={handleSubmit}
+          style={{ width:"100%", padding:"13px", borderRadius:10, border:"none",
+            background:"linear-gradient(135deg,#6366f1,#8b5cf6)", color:"#fff",
+            fontSize:15, fontWeight:700, cursor:"pointer", marginTop:8 }}>로그인</button>
+        <p style={{ textAlign:"center", color:"#475569", fontSize:11, marginTop:24, marginBottom:0 }}>
+          🔒 내부 임직원 전용 · 무단 공유 금지</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Field helpers ─────────────────────────────────────────────────────────────
+const Field = ({ label, children }) => (
+  <div style={{ marginBottom:14 }}>
+    <label style={{ display:"block", fontSize:12, fontWeight:600, color:"#374151", marginBottom:4 }}>{label}</label>
+    {children}
+  </div>
+);
+const inp = { width:"100%", padding:"8px 10px", borderRadius:7, border:"1px solid #d1d5db", fontSize:13, boxSizing:"border-box", outline:"none" };
+const TInput = ({ value, onChange, type="text", placeholder="" }) => (
+  <input type={type} value={value} onChange={onChange} placeholder={placeholder} style={inp} />
+);
+const TSelect = ({ value, onChange, children }) => (
+  <select value={value} onChange={onChange} style={{ ...inp, background:"#fff" }}>{children}</select>
+);
+const Btn = ({ label, onClick, bg="#4f46e5", color="#fff" }) => (
+  <button onClick={onClick} style={{ padding:"8px 18px", borderRadius:8, border:"none",
+    background:bg, color, fontSize:13, fontWeight:700, cursor:"pointer" }}>{label}</button>
+);
+
+// ── EditFields ────────────────────────────────────────────────────────────────
+function EditFields({ form, setForm }) {
+  return (
+    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"0 16px" }}>
+      <Field label="사업명 *"><TInput value={form.name} onChange={e => setForm({ ...form, name:e.target.value })} /></Field>
+      <Field label="투자대상"><TInput value={form.target||""} onChange={e => setForm({ ...form, target:e.target.value })} /></Field>
+      <Field label="전략자산">
+        <TSelect value={form.strategic?"O":"X"} onChange={e => setForm({ ...form, strategic:e.target.value==="O" })}>
+          <option value="O">전략자산 (O)</option>
+          <option value="X">수익자산 (X)</option>
+        </TSelect>
+      </Field>
+      <Field label="중분류">
+        <TSelect value={form.subcategory} onChange={e => setForm({ ...form, subcategory:e.target.value })}>
+          <option>신사업</option><option>공간테크</option><option>기타</option>
+        </TSelect>
+      </Field>
+      <Field label="투자시기(년)"><TInput value={form.invest_year} onChange={e => setForm({ ...form, invest_year:e.target.value })} /></Field>
+      <Field label="투자분기">
+        <TSelect value={form.invest_quarter||"Q1"} onChange={e => setForm({ ...form, invest_quarter:e.target.value })}>
+          <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+        </TSelect>
+      </Field>
+      <Field label="투자법인"><TInput value={form.invest_corp||""} onChange={e => setForm({ ...form, invest_corp:e.target.value })} /></Field>
+      <Field label="운용사"><TInput value={form.manager||""} onChange={e => setForm({ ...form, manager:e.target.value })} /></Field>
+      <Field label="투자방식">
+        <TSelect value={form.invest_method||"직접"} onChange={e => setForm({ ...form, invest_method:e.target.value })}>
+          <option>직접</option><option>간접</option><option>대여</option>
+        </TSelect>
+      </Field>
+      <Field label="청산시기"><TInput value={form.liquidation||""} onChange={e => setForm({ ...form, liquidation:e.target.value })} /></Field>
+      <Field label="투자액(억원) *"><TInput type="number" value={form.invested} onChange={e => setForm({ ...form, invested:e.target.value })} /></Field>
+      <Field label="총회수액(억원)"><TInput type="number" value={form.total_recovered} onChange={e => setForm({ ...form, total_recovered:e.target.value })} /></Field>
+      <Field label="수익(억원)"><TInput type="number" value={form.profit} onChange={e => setForm({ ...form, profit:e.target.value })} /></Field>
+      <Field label="원금회수(억원)"><TInput type="number" value={form.principal_recovered} onChange={e => setForm({ ...form, principal_recovered:e.target.value })} /></Field>
+      <Field label="비고"><TInput value={form.note||""} onChange={e => setForm({ ...form, note:e.target.value })} /></Field>
+    </div>
+  );
+}
+
+// ── Settings Modal ────────────────────────────────────────────────────────────
+function SettingsModal({ projects, quarterly, onClose, onSave }) {
+  const [localProjects, setLocalProjects] = useState(projects);
+  const [localQuarterly, setLocalQuarterly] = useState(quarterly);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [addForm, setAddForm] = useState(null);
+  const [search, setSearch] = useState("");
+
+  const filtered = localProjects.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    (p.target||"").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const applyQuarterlyDelta = (q, year, quarter, invDelta, recDelta, proDelta) => {
+    const key = year + (quarter||"Q1");
+    const updated = { ...q };
+    if (!updated[key]) updated[key] = { investment:0, recovery:0, profit:0 };
+    updated[key] = {
+      investment: Math.max(0, (updated[key].investment||0) + invDelta),
+      recovery:   Math.max(0, (updated[key].recovery||0)   + recDelta),
+      profit:     Math.max(0, (updated[key].profit||0)     + proDelta),
+    };
+    return updated;
+  };
+
+  const startEdit = (item) => {
+    setEditingId(item.id);
+    setEditForm({ ...item, invested:Math.abs(item.invested), contracted:Math.abs(item.contracted) });
+    setAddForm(null);
+  };
+
+  const saveEdit = () => {
+    const f = editForm;
+    const inv = parseFloat(f.invested)||0;
+    const rec = parseFloat(f.total_recovered)||0;
+    const pro = parseFloat(f.profit)||0;
+    const updated = { ...f, contracted:-Math.abs(parseFloat(f.contracted)||inv),
+      invested:-inv, principal_recovered:parseFloat(f.principal_recovered)||0,
+      profit:pro, total_recovered:rec, unrecovered:rec-inv };
+    const old = localProjects.find(p => p.id === editingId);
+    let newQ = localQuarterly;
+    newQ = applyQuarterlyDelta(newQ, old.invest_year, old.invest_quarter, -Math.abs(old.invested), -old.total_recovered, -old.profit);
+    newQ = applyQuarterlyDelta(newQ, updated.invest_year, updated.invest_quarter, inv, rec, pro);
+    setLocalQuarterly(newQ);
+    setLocalProjects(localProjects.map(p => p.id === editingId ? updated : p));
+    setEditingId(null); setEditForm(null);
+  };
+
+  const deleteItem = (id) => {
+    const item = localProjects.find(p => p.id === id);
+    const newQ = applyQuarterlyDelta(localQuarterly, item.invest_year, item.invest_quarter,
+      -Math.abs(item.invested), -item.total_recovered, -item.profit);
+    setLocalQuarterly(newQ);
+    setLocalProjects(localProjects.filter(p => p.id !== id));
+    if (editingId === id) { setEditingId(null); setEditForm(null); }
+  };
+
+  const startAdd = () => { setAddForm({ ...EMPTY_ITEM, id:Date.now() }); setEditingId(null); setEditForm(null); };
+
+  const saveAdd = () => {
+    const f = addForm;
+    const inv = parseFloat(f.invested)||0;
+    const rec = parseFloat(f.total_recovered)||0;
+    const pro = parseFloat(f.profit)||0;
+    const newItem = { ...f, contracted:-Math.abs(parseFloat(f.contracted)||inv),
+      invested:-inv, principal_recovered:parseFloat(f.principal_recovered)||0,
+      profit:pro, total_recovered:rec, unrecovered:rec-inv };
+    const newQ = applyQuarterlyDelta(localQuarterly, f.invest_year, f.invest_quarter, inv, rec, pro);
+    setLocalQuarterly(newQ);
+    setLocalProjects([...localProjects, newItem]);
+    setAddForm(null);
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.55)", display:"flex",
+      alignItems:"flex-start", justifyContent:"center", zIndex:1000, overflowY:"auto", padding:"24px 16px" }}>
+      <div style={{ background:"#fff", borderRadius:16, width:"100%", maxWidth:800,
+        boxShadow:"0 25px 50px rgba(0,0,0,0.3)", overflow:"hidden" }}>
+        <div style={{ background:"linear-gradient(135deg,#1a1a2e,#0f3460)", padding:"20px 28px",
+          display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+          <div style={{ color:"#fff", fontWeight:800, fontSize:18 }}>⚙️ 항목 관리</div>
+          <button onClick={onClose} style={{ background:"rgba(255,255,255,0.15)", border:"none",
+            color:"#fff", width:32, height:32, borderRadius:8, cursor:"pointer", fontSize:18 }}>×</button>
+        </div>
+        <div style={{ padding:"24px 28px", maxHeight:"70vh", overflowY:"auto" }}>
+          <div style={{ display:"flex", gap:10, marginBottom:16, alignItems:"center" }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 사업명/대상 검색..."
+              style={{ flex:1, padding:"9px 12px", borderRadius:8, border:"1px solid #d1d5db", fontSize:13, outline:"none" }} />
+            {!addForm && <Btn label="+ 신규 항목 추가" onClick={startAdd} bg="#10b981" />}
+          </div>
+
+          {addForm && (
+            <div style={{ background:"#f0fdf4", borderRadius:10, padding:20, marginBottom:16, border:"1px solid #bbf7d0" }}>
+              <div style={{ fontWeight:800, fontSize:14, color:"#065f46", marginBottom:16 }}>➕ 신규 투자항목 추가</div>
+              <EditFields form={addForm} setForm={setAddForm} />
+              <div style={{ display:"flex", gap:8, marginTop:8 }}>
+                <Btn label="저장" onClick={saveAdd} bg="#10b981" />
+                <Btn label="취소" onClick={() => setAddForm(null)} bg="#f3f4f6" color="#555" />
+              </div>
+            </div>
+          )}
+
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {filtered.map(item => {
+              const isEditing = editingId === item.id;
+              return (
+                <div key={item.id} style={{ border:"1px solid #e5e7eb", borderRadius:10, overflow:"hidden" }}>
+                  <div style={{ display:"flex", alignItems:"center", padding:"12px 14px", gap:10,
+                    background:isEditing?"#eef2ff":"#fafafa" }}>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontWeight:700, fontSize:13, color:"#1a1a2e",
+                        whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{item.name}</div>
+                      <div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>
+                        {item.invest_year} · {item.strategic?"전략":"비전략"} · {item.subcategory} · 투자 {fmt(Math.abs(item.invested))}억
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                      {!isEditing && (
+                        <button onClick={() => startEdit(item)}
+                          style={{ padding:"5px 12px", borderRadius:6, border:"1px solid #4f46e5",
+                            background:"#fff", color:"#4f46e5", fontSize:12, fontWeight:600, cursor:"pointer" }}>수정</button>
+                      )}
+                      <button onClick={() => deleteItem(item.id)}
+                        style={{ padding:"5px 12px", borderRadius:6, border:"1px solid #ef4444",
+                          background:"#fff", color:"#ef4444", fontSize:12, fontWeight:600, cursor:"pointer" }}>삭제</button>
+                    </div>
+                  </div>
+                  {isEditing && editForm && (
+                    <div style={{ padding:"16px 14px", borderTop:"1px solid #e0e7ff", background:"#fafbff" }}>
+                      <EditFields form={editForm} setForm={setEditForm} />
+                      <div style={{ display:"flex", gap:8, marginTop:4 }}>
+                        <Btn label="저장" onClick={saveEdit} />
+                        <Btn label="취소" onClick={() => { setEditingId(null); setEditForm(null); }} bg="#f3f4f6" color="#555" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div style={{ textAlign:"center", color:"#aaa", padding:32 }}>검색 결과가 없습니다</div>
+            )}
+          </div>
+        </div>
+        <div style={{ padding:"16px 28px", borderTop:"1px solid #f1f5f9", display:"flex", justifyContent:"space-between", alignItems:"center", gap:10 }}>
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={() => {
+              if(confirm("저장된 데이터를 초기화하고 기본 데이터로 되돌릴까요?")) {
+                localStorage.removeItem("inv_projects");
+                localStorage.removeItem("inv_quarterly");
+                window.location.reload();
+              }
+            }} style={{ padding:"8px 14px", borderRadius:8, border:"1px solid #f59e0b", background:"#fffbeb",
+              color:"#b45309", fontWeight:700, fontSize:12, cursor:"pointer" }}>
+              🔄 기본 데이터로 초기화
+            </button>
+            <button onClick={() => {
+              const data = JSON.stringify({ projects: localProjects, quarterly: localQuarterly }, null, 2);
+              const blob = new Blob([data], { type:"application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url; a.download = "investment_data.json"; a.click();
+              URL.revokeObjectURL(url);
+            }} style={{ padding:"8px 14px", borderRadius:8, border:"1px solid #4f46e5", background:"#eef2ff",
+              color:"#4f46e5", fontWeight:700, fontSize:12, cursor:"pointer" }}>
+              📥 데이터 내보내기(JSON)
+            </button>
+            <label style={{ padding:"8px 14px", borderRadius:8, border:"1px solid #0ea5e9", background:"#e0f2fe",
+              color:"#0369a1", fontWeight:700, fontSize:12, cursor:"pointer" }}>
+              📂 데이터 불러오기(JSON)
+              <input type="file" accept=".json" style={{ display:"none" }} onChange={e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = ev => {
+                  try {
+                    const parsed = JSON.parse(ev.target.result);
+                    if (parsed.projects) setLocalProjects(parsed.projects);
+                    if (parsed.quarterly) setLocalQuarterly(parsed.quarterly);
+                    alert("✅ 데이터를 성공적으로 불러왔습니다. '저장 후 닫기'를 눌러 적용하세요.");
+                  } catch { alert("❌ JSON 파일 형식이 올바르지 않습니다."); }
+                };
+                reader.readAsText(file);
+                e.target.value = "";
+              }} />
+            </label>
+          </div>
+          <div style={{ display:"flex", gap:10 }}>
+            <Btn label="저장 후 닫기" onClick={() => onSave(localProjects, localQuarterly)} />
+            <Btn label="닫기" onClick={onClose} bg="#f3f4f6" color="#555" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
+function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [projects, setProjects] = useState(() => {
+    try {
+      const saved = localStorage.getItem("inv_projects");
+      return saved ? JSON.parse(saved) : SEED_PROJECTS;
+    } catch { return SEED_PROJECTS; }
+  });
+  const [quarterly, setQuarterly] = useState(() => {
+    try {
+      const saved = localStorage.getItem("inv_quarterly");
+      return saved ? JSON.parse(saved) : SEED_QUARTERLY;
+    } catch { return SEED_QUARTERLY; }
+  });
+
+  const saveToStorage = useCallback((newProjects, newQuarterly) => {
+    try {
+      localStorage.setItem("inv_projects", JSON.stringify(newProjects));
+      localStorage.setItem("inv_quarterly", JSON.stringify(newQuarterly));
+    } catch(e) { console.warn("저장 실패:", e); }
+  }, []);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [selectedStrategic, setSelectedStrategic] = useState("all");
+  const [selectedSubcat, setSelectedSubcat] = useState("all");
+  const [selectedQuarterRange, setSelectedQuarterRange] = useState("all");
+  const [expandedItem, setExpandedItem] = useState(null);
+  const [issueFilter, setIssueFilter] = useState(false);
+  const [sortOrder, setSortOrder] = useState("name");
+  const [showSettings, setShowSettings] = useState(false);
+
+  const handleSettingsSave = useCallback((newProjects, newQuarterly) => {
+    setProjects(newProjects);
+    setQuarterly(newQuarterly);
+    saveToStorage(newProjects, newQuarterly);
+    setShowSettings(false);
+  }, [saveToStorage]);
+
+  const filteredProjects = useMemo(() => projects.filter(r => {
+    if (selectedStrategic === "strategic" && !r.strategic) return false;
+    if (selectedStrategic === "nonstrategic" && r.strategic) return false;
+    if (selectedSubcat !== "all" && r.subcategory !== selectedSubcat) return false;
+    if (issueFilter && (getIssues(r).length === 0 || (r.note||"").includes("손상차손"))) return false;
+    return true;
+  }), [projects, selectedStrategic, selectedSubcat, issueFilter]);
+
+  const totalInvested = useMemo(() => filteredProjects.reduce((s,r) => s + Math.abs(r.invested), 0), [filteredProjects]);
+  const totalRecovered = useMemo(() => filteredProjects.reduce((s,r) => s + r.total_recovered, 0), [filteredProjects]);
+  const totalProfit = useMemo(() => filteredProjects.reduce((s,r) => s + r.profit, 0), [filteredProjects]);
+  const returnRate = totalInvested > 0 ? (totalProfit / totalInvested * 100) : 0;
+
+  const categoryBreakdown = useMemo(() => {
+    const groups = {};
+    filteredProjects.forEach(r => {
+      const key = r.strategic ? "전략자산" : "수익자산";
+      if (!groups[key]) groups[key] = { invested:0, recovered:0, profit:0, count:0 };
+      groups[key].invested += Math.abs(r.invested);
+      groups[key].recovered += r.total_recovered;
+      groups[key].profit += r.profit;
+      groups[key].count++;
+    });
+    return Object.entries(groups).map(([name,v]) => ({ name, ...v, returnRate:v.invested>0?v.profit/v.invested*100:0 }));
+  }, [filteredProjects]);
+
+  const subcatBreakdown = useMemo(() => {
+    const groups = {};
+    filteredProjects.forEach(r => {
+      const key = r.subcategory;
+      if (!groups[key]) groups[key] = { invested:0, recovered:0, profit:0, count:0 };
+      groups[key].invested += Math.abs(r.invested);
+      groups[key].recovered += r.total_recovered;
+      groups[key].profit += r.profit;
+      groups[key].count++;
+    });
+    return Object.entries(groups).map(([name,v]) => ({ name, ...v }));
+  }, [filteredProjects]);
+
+  const quarterlyChartData = useMemo(() => {
+    // filteredProjects에서 직접 집계
+    const groups = {};
+    filteredProjects.forEach(r => {
+      const key = (r.invest_year||"미상") + (r.invest_quarter||"Q1");
+      if (!groups[key]) groups[key] = { investment:0, recovery:0, profit:0 };
+      groups[key].investment += Math.abs(r.invested);
+      groups[key].recovery  += r.total_recovered;
+      groups[key].profit    += r.profit;
+    });
+    const entries = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b));
+    const filtered = (selectedQuarterRange === "all" || selectedQuarterRange === "recent") ? entries
+      : entries.filter(([k]) => k.startsWith(String(selectedQuarterRange)));
+    return filtered.map(([key,v]) => ({
+      quarter: key,
+      투자: Math.round((v.investment||0)*10)/10,
+      회수: Math.round((v.recovery||0)*10)/10,
+      수익: Math.round((v.profit||0)*10)/10,
+    }));
+  }, [filteredProjects, selectedQuarterRange]);
+
+  const annualChartData = useMemo(() => {
+    // SEED_ANNUAL: 엑셀 합계행의 연도별 실제 출자/회수/수익 데이터 (억원)
+    // 필터 적용 시 filteredProjects 비율로 스케일링
+    const totalAllInvested = SEED_PROJECTS.reduce((s,r) => s + Math.abs(r.invested), 0);
+    const totalFilteredInvested = filteredProjects.reduce((s,r) => s + Math.abs(r.invested), 0);
+    const ratio = totalAllInvested > 0 ? totalFilteredInvested / totalAllInvested : 1;
+
+    return Object.entries(SEED_ANNUAL)
+      .filter(([year]) => year !== "2026")
+      .sort(([a],[b]) => Number(a)-Number(b))
+      .map(([year, v]) => ({
+        year: year + "년",
+        투자: Math.round((v.investment || 0) * ratio * 10) / 10,
+        회수: Math.round((v.recovery  || 0) * ratio * 10) / 10,
+        수익: Math.round((v.profit    || 0) * ratio * 10) / 10,
+      }));
+  }, [filteredProjects]);
+
+  const pieData = subcatBreakdown.map(s => ({ name:s.name, value:Math.round(s.invested) }));
+  const categoryPieData = useMemo(() => categoryBreakdown.map(s => ({ name:s.name, value:Math.round(s.invested) })), [categoryBreakdown]);
+  const PIE_COLORS = ["#4f46e5","#0ea5e9","#f59e0b","#10b981"];
+  const allYears = useMemo(() => [...new Set(filteredProjects.map(r => r.invest_year).filter(Boolean))].sort(), [filteredProjects]);
+
+  if (!loggedIn) return <LoginScreen onLogin={() => setLoggedIn(true)} />;
+
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target.result, { type:"array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:"" });
+
+        const newProjects = [];
+        for (let i = 5; i < rows.length; i++) {
+          const r = rows[i];
+          const name = String(r[2]||"").trim();
+          if (!name || name === "합계" || name === "소계") continue;
+          const invested = parseFloat(r[8]||0) || 0;
+          if (invested === 0 && !name) continue;
+          newProjects.push({
+            id: i,
+            name,
+            target:        String(r[3]||"").trim(),
+            strategic:     String(r[0]||"").includes("전략"),
+            subcategory:   String(r[1]||"").trim() || "기타",
+            invest_year:   parseInt(r[4])||null,
+            invest_quarter:String(r[5]||"").trim()||null,
+            invest_corp:   String(r[6]||"").trim(),
+            invest_method: String(r[7]||"").trim(),
+            contracted:    -(Math.abs(parseFloat(r[8]||0)||0)),
+            invested:      -(Math.abs(parseFloat(r[9]||0)||0)),
+            principal_recovered: parseFloat(r[10]||0)||0,
+            profit:        parseFloat(r[11]||0)||0,
+            total_recovered:    (parseFloat(r[10]||0)||0) + (parseFloat(r[11]||0)||0),
+            unrecovered:   -(Math.abs(parseFloat(r[12]||0)||0)),
+            manager:       String(r[13]||"").trim(),
+            note:          String(r[14]||"").trim(),
+          });
+        }
+        if (newProjects.length === 0) { alert("❌ 데이터를 찾을 수 없습니다. 엑셀 형식을 확인해주세요."); return; }
+        setProjects(newProjects);
+        saveToStorage(newProjects, quarterly);
+        alert(`✅ 엑셀 데이터 반영 완료! (${newProjects.length}개 항목)`);
+      } catch(err) {
+        alert("❌ 파싱 오류: " + err.message);
+      }
+      e.target.value = "";
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const tabStyle = id => ({
+    padding:"10px 22px", borderRadius:8, cursor:"pointer", fontWeight:700, fontSize:14, transition:"all 0.2s",
+    background: activeTab===id ? "#4f46e5" : "#fff",
+    color: activeTab===id ? "#fff" : "#555",
+    border: activeTab===id ? "2px solid #4f46e5" : "2px solid #d1d5db",
+  });
+  const tdR = { padding:"10px", borderBottom:"1px solid #f1f5f9", textAlign:"right", fontSize:13 };
+  const tdL = { padding:"10px", borderBottom:"1px solid #f1f5f9", textAlign:"left", fontSize:14, fontWeight:700, color:"#111" };
+
+  return (
+    <div style={{ fontFamily:"'Noto Sans KR',sans-serif", background:"#f8f9fb", minHeight:"100vh" }}>
+      {showSettings && (
+        <SettingsModal projects={projects} quarterly={quarterly}
+          onClose={() => setShowSettings(false)} onSave={handleSettingsSave} />
+      )}
+
+      {/* Header */}
+      <div style={{ background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)", padding:"28px 32px", color:"#fff" }}>
+        <div style={{ maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"flex-start", justifyContent:"space-between" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:16 }}>
+            <div style={{ width:52, height:52, flexShrink:0 }}>
+              <img src="data:image/png;base64,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" style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+            </div>
+            <div>
+              <div style={{ fontSize:11, color:"#a5b4fc", letterSpacing:2, marginBottom:6, textTransform:"uppercase" }}>투자사업팀</div>
+              <h1 style={{ margin:0, fontSize:26, fontWeight:900 }}>투자자산 현황</h1>
+              <div style={{ fontSize:13, color:"#94a3b8", marginTop:6 }}>기준일: 2025.11.14</div>
+            </div>
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <label style={{ background:"rgba(16,185,129,0.2)", border:"1px solid rgba(16,185,129,0.5)",
+                color:"#6ee7b7", padding:"8px 16px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600 }}>
+              📂 자료추가
+              <input type="file" accept=".xlsx,.xls" style={{ display:"none" }} onChange={handleExcelUpload} />
+            </label>
+            <button onClick={() => setShowSettings(true)}
+              style={{ background:"rgba(255,255,255,0.15)", border:"1px solid rgba(255,255,255,0.25)",
+                color:"#fff", padding:"8px 16px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600 }}>
+              ⚙️ 설정</button>
+            <button onClick={() => setLoggedIn(false)}
+              style={{ background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.2)",
+                color:"#cbd5e1", padding:"7px 16px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600 }}>
+              🔒 로그아웃</button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth:1200, margin:"0 auto", padding:"24px 20px" }}>
+        {/* Tabs */}
+        <div style={{ display:"flex", gap:8, marginBottom:24 }}>
+          {[{id:"overview",label:"종합현황"},{id:"quarterly",label:"분기별 내역"},{id:"projects",label:"항목별 현황"}]
+            .map(t => <button key={t.id} style={tabStyle(t.id)} onClick={() => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); }}>{t.label}</button>)}
+        </div>
+
+        {/* Filters */}
+        <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:20, alignItems:"center" }}>
+          <span style={{ fontSize:14, color:"#111", fontWeight:800 }}>대분류:</span>
+          {[["all","전체"],["strategic","전략자산"],["nonstrategic","수익자산"]].map(([v,l]) => (
+            <button key={v} onClick={() => setSelectedStrategic(v)}
+              style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
+                background:selectedStrategic===v?"#4f46e5":"#fff", color:selectedStrategic===v?"#fff":"#555", fontWeight:600 }}>{l}</button>
+          ))}
+          <span style={{ fontSize:14, color:"#111", fontWeight:800, marginLeft:8 }}>중분류:</span>
+          {[["all","전체"],["신사업","신사업"],["공간테크","공간테크"],["기타","기타"]].map(([v,l]) => (
+            <button key={v} onClick={() => setSelectedSubcat(v)}
+              style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
+                background:selectedSubcat===v?"#4f46e5":"#fff", color:selectedSubcat===v?"#fff":"#555", fontWeight:600 }}>{l}</button>
+          ))}
+          {activeTab === "projects" && (
+            <div style={{ display:"flex", alignItems:"center", gap:6, marginLeft:8 }}>
+              <span style={{ fontSize:14, color:"#111", fontWeight:800 }}>정렬:</span>
+              {[{id:"invested",label:"투자액순"},{id:"recovered",label:"회수액순"},{id:"returnRate",label:"수익률순"},{id:"investYear",label:"투자시기순"}].map(s => (
+                <button key={s.id} onClick={() => { setSortOrder(s.id); setIssueFilter(false); }}
+                  style={{ padding:"6px 12px", borderRadius:6, cursor:"pointer", fontSize:12, fontWeight:600,
+                    background: sortOrder===s.id ? "#4f46e5" : "#fff",
+                    color: sortOrder===s.id ? "#fff" : "#555",
+                    border: sortOrder===s.id ? "2px solid #4f46e5" : "2px solid #d1d5db" }}>
+                  {s.label}</button>
+              ))}
+              <div style={{ width:1, height:20, background:"#d1d5db", marginLeft:4 }} />
+              <button onClick={() => setIssueFilter(!issueFilter)}
+                style={{ padding:"6px 14px", borderRadius:6,
+                  border: "2px solid #ef4444",
+                  cursor:"pointer", fontSize:12,
+                  background: issueFilter ? "#ef4444" : "#fff5f5",
+                  color: issueFilter ? "#fff" : "#ef4444",
+                  fontWeight:700,
+                  boxShadow: issueFilter ? "0 0 0 3px rgba(239,68,68,0.2)" : "none" }}>
+                {issueFilter ? "✅ 이슈항목만 보기 중" : "⚠️ 이슈항목만"}</button>
+            </div>
+          )}
+        </div>
+
+        {/* ── OVERVIEW TAB ── */}
+        {activeTab === "overview" && (
+          <div>
+            <div style={{ display:"flex", gap:16, marginBottom:20, flexWrap:"wrap" }}>
+              <KPICard label="총 투자액" value={fmt(totalInvested)+"억원"} icon="💰" color="#4f46e5" sub={filteredProjects.length+"개 프로젝트"} />
+              <KPICard label="총 회수액" value={fmt(totalRecovered)+"억원"} icon="🔄" color="#0ea5e9" sub={"회수율 "+fmt(totalInvested>0?totalRecovered/totalInvested*100:0)+"%"} />
+              <KPICard label="총 수익" value={fmt(totalProfit)+"억원"} icon="📈" color="#10b981" sub={"미회수 "+fmt(totalInvested-totalRecovered)+"억원"} />
+              <KPICard label="수익률" value={fmt(returnRate)+"%"} icon="🎯" color="#f59e0b" sub="수익/투자액" />
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:0, alignItems:"stretch" }}>
+              <div style={{ background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", display:"flex", flexDirection:"column" }}>
+                <h3 style={{ margin:"0 0 14px", fontSize:20, fontWeight:900, color:"#000", letterSpacing:"-0.5px" }}>대분류별 현황</h3>
+                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                  <thead><tr style={{ background:"#f8f9fb" }}>
+                    {["구분","건수","투자액","회수액","수익","수익률"].map(h => (
+                      <th key={h} style={{ padding:"10px 8px", textAlign:h==="구분"?"left":"right", color:"#666", fontWeight:700, borderBottom:"2px solid #e2e8f0", fontSize:12 }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>{categoryBreakdown.map((row,i) => (
+                    <tr key={row.name}>
+                      <td style={tdL}>
+                        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                          <span style={{ display:"inline-block", width:10, height:10, borderRadius:2, background:PIE_COLORS[i%PIE_COLORS.length], flexShrink:0 }} />
+                          {row.name}
+                        </div>
+                      </td>
+                      <td style={tdR}>{row.count}</td>
+                      <td style={tdR}>{fmt(row.invested)}</td>
+                      <td style={tdR}>{fmt(row.recovered)}</td>
+                      <td style={{ ...tdR, color:row.profit>=0?"#10b981":"#ef4444" }}>{fmt(row.profit)}</td>
+                      <td style={{ ...tdR, color:row.returnRate>=5?"#10b981":"#f59e0b" }}>{fmt(row.returnRate)}%</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+                {selectedStrategic === "all" && (
+                  <div style={{ marginTop:28, flex:1, display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:"#666", marginBottom:8 }}>투자액 비중</div>
+                    {(() => {
+                      const total = categoryBreakdown.reduce((s,r)=>s+r.invested,0);
+                      return categoryBreakdown.map((row,i) => {
+                        const pct = total>0?(row.invested/total*100):0;
+                        return (
+                          <div key={row.name} style={{ marginBottom:8 }}>
+                            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
+                              <span style={{ fontSize:11, color:"#555", display:"flex", alignItems:"center", gap:5 }}>
+                                <span style={{ display:"inline-block", width:8, height:8, borderRadius:2, background:PIE_COLORS[i%PIE_COLORS.length] }} />
+                                {row.name}
+                              </span>
+                              <span style={{ fontSize:11, fontWeight:700, color:PIE_COLORS[i%PIE_COLORS.length] }}>{pct.toFixed(1)}%</span>
+                            </div>
+                            <div style={{ background:"#f1f5f9", borderRadius:4, height:8, overflow:"hidden" }}>
+                              <div style={{ width:pct+"%", height:"100%", background:PIE_COLORS[i%PIE_COLORS.length], borderRadius:4, transition:"width 0.6s ease" }} />
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
+              </div>
+              <div style={{ background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", display:"flex", flexDirection:"column" }}>
+                <h3 style={{ margin:"0 0 14px", fontSize:20, fontWeight:900, color:"#000", letterSpacing:"-0.5px" }}>중분류별 현황</h3>
+                <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                  <thead><tr style={{ background:"#f8f9fb" }}>
+                    {["구분","건수","투자액","회수액","수익"].map(h => (
+                      <th key={h} style={{ padding:"10px 8px", textAlign:h==="구분"?"left":"right", color:"#666", fontWeight:700, borderBottom:"2px solid #e2e8f0", fontSize:12 }}>{h}</th>
+                    ))}
+                  </tr></thead>
+                  <tbody>{subcatBreakdown.map((row,i) => (
+                    <tr key={row.name}>
+                      <td style={tdL}>
+                        <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                          <span style={{ display:"inline-block", width:10, height:10, borderRadius:2, background:PIE_COLORS[i%PIE_COLORS.length], flexShrink:0 }} />
+                          {row.name}
+                        </div>
+                      </td>
+                      <td style={tdR}>{row.count}</td>
+                      <td style={tdR}>{fmt(row.invested)}</td>
+                      <td style={tdR}>{fmt(row.recovered)}</td>
+                      <td style={{ ...tdR, color:row.profit>=0?"#10b981":"#ef4444" }}>{fmt(row.profit)}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+                <div style={{ marginTop:28 }}>
+                  <div style={{ fontSize:12, fontWeight:700, color:"#666", marginBottom:8 }}>투자액 비중</div>
+                  {(() => {
+                    const total = subcatBreakdown.reduce((s,r)=>s+r.invested,0);
+                    return subcatBreakdown.map((row,i) => {
+                      const pct = total>0?(row.invested/total*100):0;
+                      return (
+                        <div key={row.name} style={{ marginBottom:8 }}>
+                          <div style={{ display:"flex", justifyContent:"space-between", marginBottom:3 }}>
+                            <span style={{ fontSize:11, color:"#555", display:"flex", alignItems:"center", gap:5 }}>
+                              <span style={{ display:"inline-block", width:8, height:8, borderRadius:2, background:PIE_COLORS[i%PIE_COLORS.length] }} />
+                              {row.name}
+                            </span>
+                            <span style={{ fontSize:11, fontWeight:700, color:PIE_COLORS[i%PIE_COLORS.length] }}>{pct.toFixed(1)}%</span>
+                          </div>
+                          <div style={{ background:"#f1f5f9", borderRadius:4, height:8, overflow:"hidden" }}>
+                            <div style={{ width:pct+"%", height:"100%", background:PIE_COLORS[i%PIE_COLORS.length], borderRadius:4, transition:"width 0.6s ease" }} />
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+            <div style={{ background:"#fff", borderRadius:12, padding:"4px 20px 20px", boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginTop:16 }}>
+              <h3 style={{ margin:"8px 0 4px", fontSize:15, fontWeight:700, color:"#1a1a2e" }}>📊 연간 투자·회수·수익 추이</h3>
+              <div style={{ fontSize:11, color:"#aaa", marginBottom:8 }}>(단위: 억원)</div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={annualChartData} margin={{ top:24, right:20, left:20, bottom:5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="year" tick={{ fontSize:12 }} />
+                  <YAxis tick={{ fontSize:11, fill:"#555" }}
+                    tickFormatter={v => v+"억"}
+                    ticks={[0,100,200,300,400,500,600]}
+                    domain={[0,600]}
+                    width={60} />
+                  <Tooltip formatter={v => [fmt(v)+"억원"]} />
+                  <Legend />
+                  <Bar dataKey="투자" fill="#4f46e5" radius={[3,3,0,0]}>
+                    <LabelList dataKey="투자" position="top" fontSize={10} fill="#4f46e5" fontWeight={700}
+                      formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
+                  </Bar>
+                  <Bar dataKey="회수" fill="#0ea5e9" radius={[3,3,0,0]}>
+                    <LabelList dataKey="회수" position="top" fontSize={10} fill="#0ea5e9" fontWeight={700}
+                      formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
+                  </Bar>
+                  <Bar dataKey="수익" fill="#10b981" radius={[3,3,0,0]}>
+                    <LabelList dataKey="수익" position="top" fontSize={10} fill="#10b981" fontWeight={700}
+                      formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ── QUARTERLY TAB ── */}
+        {activeTab === "quarterly" && (
+          <div>
+            <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+              <span style={{ fontSize:13, color:"#888", alignSelf:"center" }}>연도 필터:</span>
+              {["all","recent",...allYears].map(y => (
+                <button key={y} onClick={() => setSelectedQuarterRange(y)}
+                  style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
+                    background:selectedQuarterRange===y?"#4f46e5":"#fff", color:selectedQuarterRange===y?"#fff":"#555", fontWeight:600 }}>
+                  {y==="all"?"전체":y==="recent"?"직전 4분기":y}</button>
+              ))}
+            </div>
+            {(() => {
+              const now = new Date();
+              const curY = now.getFullYear();
+              const curQ = Math.ceil((now.getMonth()+1)/3);
+              const recentQuarters = [];
+              let y = curY, q = curQ;
+              for (let i = 0; i < 4; i++) {
+                recentQuarters.unshift(`${y}Q${q}`);
+                q--; if (q < 1) { q = 4; y--; }
+              }
+              const dataMap = {};
+              quarterlyChartData.forEach(r => { dataMap[r.quarter] = r; });
+              const qTotalInvested  = recentQuarters.reduce((s,k) => s + (dataMap[k]?.투자||0), 0);
+              const qTotalRecovered = recentQuarters.reduce((s,k) => s + (dataMap[k]?.회수||0), 0);
+              const qTotalProfit    = recentQuarters.reduce((s,k) => s + (dataMap[k]?.수익||0), 0);
+              const qReturnRate     = qTotalInvested > 0 ? qTotalProfit / qTotalInvested * 100 : 0;
+              const qLabel = `${recentQuarters[0]} ~ ${recentQuarters[3]}`;
+              return (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:16 }}>
+                  <KPICard label="총투자액" value={fmt(qTotalInvested)+"억"} color="#4f46e5" sub={qLabel} />
+                  <KPICard label="총회수액" value={fmt(qTotalRecovered)+"억"} color="#0ea5e9" sub={qLabel} />
+                  <KPICard label="총수익" value={fmt(qTotalProfit)+"억"} color="#10b981" sub={qLabel} />
+                  <KPICard label="수익률" value={fmt(qReturnRate)+"%"} color="#f59e0b" sub="수익/투자액" />
+                </div>
+              );
+            })()}
+            <div style={{ background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginBottom:20 }}>
+              <h3 style={{ margin:"0 0 16px", fontSize:15, fontWeight:700, color:"#1a1a2e" }}>분기별 투자·회수·수익 (단위: 억원)</h3>
+              {(() => {
+                const now = new Date();
+                const curY = now.getFullYear();
+                const curQ = Math.ceil((now.getMonth()+1)/3);
+                const recentQuarters = [];
+                let y = curY, q = curQ;
+                for (let i = 0; i < 4; i++) {
+                  recentQuarters.unshift(`${y}Q${q}`);
+                  q--; if (q < 1) { q = 4; y--; }
+                }
+                const dataMap = {};
+                quarterlyChartData.forEach(r => { dataMap[r.quarter] = r; });
+                const chartData = recentQuarters.map(qkey => ({
+                  quarter: qkey,
+                  투자: dataMap[qkey]?.투자 || 0,
+                  회수: dataMap[qkey]?.회수 || 0,
+                  수익: dataMap[qkey]?.수익 || 0,
+                }));
+                return (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={chartData} margin={{ top:5, right:20, left:0, bottom:5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="quarter" tick={{ fontSize:12 }} />
+                      <YAxis tick={{ fontSize:11 }} tickFormatter={v => v >= 1000 ? (v/1000)+"천억" : v+"억"} width={52} />
+                      <Tooltip formatter={v => [fmt(v)+"억원"]} />
+                      <Legend />
+                      <Bar dataKey="투자" fill="#4f46e5" radius={[3,3,0,0]} />
+                      <Bar dataKey="회수" fill="#0ea5e9" radius={[3,3,0,0]} />
+                      <Bar dataKey="수익" fill="#10b981" radius={[3,3,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                );
+              })()}
+            </div>
+            <div style={{ background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)" }}>
+              <h3 style={{ margin:"0 0 16px", fontSize:15, fontWeight:700, color:"#1a1a2e" }}>분기별 상세 내역 (단위: 억원)</h3>
+              <div style={{ overflowX:"auto" }}>
+                {(() => {
+                  const now = new Date();
+                  const curY = now.getFullYear();
+                  const curQ = Math.ceil((now.getMonth()+1)/3);
+                  const dataMap = {};
+                  quarterlyChartData.forEach(r => { dataMap[r.quarter] = r; });
+                  // 연도 선택 시 해당 연도 4분기, 전체/직전4분기이면 최근 4분기
+                  let tableQuarters = [];
+                  if (selectedQuarterRange === "all" || selectedQuarterRange === "recent") {
+                    let y = curY, q = curQ;
+                    for (let i = 0; i < 4; i++) {
+                      tableQuarters.unshift(`${y}Q${q}`);
+                      q--; if (q < 1) { q = 4; y--; }
+                    }
+                  } else {
+                    tableQuarters = ["Q1","Q2","Q3","Q4"].map(q => `${selectedQuarterRange}${q}`);
+                  }
+                  return (
+                    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+                      <thead><tr style={{ background:"#f8f9fb" }}>
+                        {["분기","투자액","회수액","수익","순현금흐름"].map(h => (
+                          <th key={h} style={{ padding:"10px 14px", textAlign:h==="분기"?"left":"right",
+                            color:"#666", fontWeight:700, borderBottom:"2px solid #e2e8f0", whiteSpace:"nowrap" }}>{h}</th>
+                        ))}
+                      </tr></thead>
+                      <tbody>{tableQuarters.map(qkey => {
+                        const row = dataMap[qkey];
+                        const inv = row ? row.투자 : null;
+                        const rec = row ? row.회수 : null;
+                        const prf = row ? row.수익 : null;
+                        const net = (inv!=null && rec!=null && prf!=null) ? rec + prf - inv : null;
+                        const isCurrent = qkey === `${curY}Q${curQ}`;
+                        return (
+                          <tr key={qkey} style={{ background: isCurrent ? "#f5f3ff" : "transparent" }}>
+                            <td style={{ padding:"9px 14px", fontWeight:700, color: isCurrent ? "#4f46e5" : "#1a1a2e" }}>
+                              {qkey}{isCurrent && <span style={{ fontSize:10, marginLeft:4, color:"#4f46e5" }}>▶ 현재</span>}
+                            </td>
+                            <td style={{ padding:"9px 14px", textAlign:"right" }}>{inv!=null ? fmt(inv)+"억" : "—"}</td>
+                            <td style={{ padding:"9px 14px", textAlign:"right", color:"#0ea5e9" }}>{rec!=null ? fmt(rec)+"억" : "—"}</td>
+                            <td style={{ padding:"9px 14px", textAlign:"right", color:"#10b981" }}>{prf!=null ? fmt(prf)+"억" : "—"}</td>
+                            <td style={{ padding:"9px 14px", textAlign:"right", color: net==null?"#aaa":net>=0?"#10b981":"#ef4444", fontWeight:700 }}>
+                              {net!=null ? (net>=0?"+":"")+fmt(net)+"억" : "—"}</td>
+                          </tr>
+                        );
+                      })}</tbody>
+                    </table>
+                  );
+                })()}
+              </div>
+            </div>
+
+            {/* ── 항목상세 ── */}
+            {(() => {
+              const now = new Date();
+              const curY = now.getFullYear();
+              const curQ = Math.ceil((now.getMonth()+1)/3);
+              const recentQuarters = [];
+              let _y = curY, _q = curQ;
+              for (let i = 0; i < 4; i++) {
+                recentQuarters.unshift(`${_y}Q${_q}`);
+                _q--; if (_q < 1) { _q = 4; _y--; }
+              }
+
+              // 분기별 변동 포트폴리오 수집 (투자 or 회수 있는 것)
+              const quarterGroups = recentQuarters.map(qkey => {
+                const [qy, qq] = qkey.split("Q");
+                const items = projects.filter(p =>
+                  String(p.invest_year) === qy &&
+                  (p.invest_quarter||"Q1") === "Q"+qq &&
+                  (Math.abs(p.invested||0) > 0 || Math.abs(p.total_recovered||0) > 0)
+                );
+                return { qkey, items };
+              }).filter(g => g.items.length > 0);
+
+              return (
+                <div style={{ background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginTop:16 }}>
+                  <h3 style={{ margin:"0 0 16px", fontSize:15, fontWeight:700, color:"#1a1a2e" }}>항목상세</h3>
+                  {quarterGroups.length === 0 ? (
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:100,
+                      color:"#cbd5e1", fontSize:13, borderRadius:8, border:"1.5px dashed #e2e8f0", background:"#f8f9fb" }}>
+                      분기 변동 내역이 없습니다
+                    </div>
+                  ) : (
+                    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+                      {quarterGroups.map(({ qkey, items }) => {
+                        const isCurrent = qkey === `${curY}Q${curQ}`;
+                        return (
+                          <div key={qkey}>
+                            {/* 분기 헤더 */}
+                            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                              <span style={{ fontSize:13, fontWeight:800,
+                                color: isCurrent ? "#4f46e5" : "#64748b",
+                                background: isCurrent ? "#ede9fe" : "#f1f5f9",
+                                padding:"3px 10px", borderRadius:6 }}>
+                                {qkey}
+                              </span>
+                              {isCurrent && <span style={{ fontSize:10, color:"#4f46e5", fontWeight:700 }}>▶ 현재</span>}
+                              <span style={{ fontSize:11, color:"#aaa" }}>{items.length}건</span>
+                            </div>
+                            {/* 카드 그리드 */}
+                            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(260px,1fr))", gap:10 }}>
+                              {[...items].sort((a,b) => {
+                                // 회수있는 것 먼저, 그 다음 투자액순
+                                const ra = Math.abs(a.total_recovered||0)>0?1:0;
+                                const rb = Math.abs(b.total_recovered||0)>0?1:0;
+                                if (ra !== rb) return rb - ra;
+                                return Math.abs(b.invested||0) - Math.abs(a.invested||0);
+                              }).map(item => {
+                                const invested = Math.abs(item.invested||0);
+                                const recovered = Math.abs(item.total_recovered||0);
+                                const rr = invested > 0 ? item.profit/invested*100 : 0;
+                                const hasRecovery = recovered > 0;
+                                const issues = getIssues(item);
+                                const hasIssue = issues.length > 0;
+                                return (
+                                  <div key={item.id} style={{
+                                    borderRadius:10, overflow:"hidden", cursor:"default",
+                                    border: hasIssue ? "2px solid #fca5a5" : hasRecovery ? "2px solid #bae6fd" : "2px solid #ddd6fe",
+                                    background: hasIssue ? "#fff5f5" : hasRecovery ? "#f0f9ff" : "#faf9ff"
+                                  }}>
+                                    {/* 상단 헤더 */}
+                                    <div style={{ padding:"10px 14px 8px",
+                                      background: hasIssue ? "linear-gradient(135deg,#ffe4e4,#fff5f5)"
+                                        : hasRecovery ? "linear-gradient(135deg,#e0f2fe,#f0f9ff)"
+                                        : "linear-gradient(135deg,#ede9fe,#faf9ff)" }}>
+                                      <div style={{ display:"flex", alignItems:"center", gap:5, marginBottom:5 }}>
+                                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 6px", borderRadius:4,
+                                          background: item.strategic?"#ede9fe":"#e0f2fe",
+                                          color: item.strategic?"#7c3aed":"#0284c7" }}>
+                                          {item.strategic?"전략":"수익"}
+                                        </span>
+                                        <span style={{ fontSize:10, fontWeight:600, padding:"2px 6px", borderRadius:4,
+                                          background: item.subcategory==="신사업"?"#fef3c7":item.subcategory==="공간테크"?"#d1fae5":"#f3f4f6",
+                                          color: item.subcategory==="신사업"?"#b45309":item.subcategory==="공간테크"?"#065f46":"#6b7280" }}>
+                                          {item.subcategory}
+                                        </span>
+                                        {hasRecovery && <span style={{ fontSize:10, fontWeight:700, color:"#0ea5e9", marginLeft:"auto" }}>💧 회수</span>}
+                                        {hasIssue && <span style={{ fontSize:10, fontWeight:700, color:"#ef4444", marginLeft:"auto" }}>⚠️ 이슈</span>}
+                                      </div>
+                                      <div style={{ fontWeight:700, fontSize:13, color:"#1a1a2e",
+                                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{item.name}</div>
+                                      <div style={{ fontSize:11, color:"#94a3b8", marginTop:2, minHeight:15,
+                                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{item.target||""}</div>
+                                    </div>
+                                    {/* 수치 */}
+                                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr",
+                                      borderTop: hasIssue?"1px solid #fecaca":hasRecovery?"1px solid #bae6fd":"1px solid #ddd6fe",
+                                      padding:"8px 0" }}>
+                                      {[
+                                        { label:"투자액", value:Math.round(invested*10)/10+"억", color:"#4f46e5" },
+                                        { label:"회수액", value:Math.round(recovered*10)/10+"억", color:"#0ea5e9" },
+                                        { label:"수익률", value:Math.round(rr*10)/10+"%",
+                                          color: rr>=10?"#10b981":rr>0?"#f59e0b":"#ef4444" },
+                                      ].map((s,si) => (
+                                        <div key={s.label} style={{ textAlign:"center", padding:"0 6px",
+                                          borderRight: si<2?(hasIssue?"1px solid #fecaca":hasRecovery?"1px solid #bae6fd":"1px solid #ddd6fe"):"none" }}>
+                                          <div style={{ fontSize:10, color:"#aaa", marginBottom:2 }}>{s.label}</div>
+                                          <div style={{ fontSize:12, fontWeight:800, color:s.color }}>{s.value}</div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
+        {/* ── PROJECTS TAB ── */}
+        {activeTab === "projects" && (
+          <div>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+              <div style={{ fontSize:13, color:"#888" }}>
+                총 <strong style={{ color:"#1a1a2e" }}>{filteredProjects.length}</strong>개 항목 ·
+                이슈 <strong style={{ color:"#ef4444" }}>{filteredProjects.filter(r=>getIssues(r).length>0).length}</strong>건
+              </div>
+              <button onClick={() => setShowSettings(true)}
+                style={{ padding:"7px 16px", borderRadius:8, border:"1px solid #10b981", background:"#f0fdf4",
+                  color:"#065f46", fontSize:12, fontWeight:700, cursor:"pointer" }}>➕ 항목 추가 / 수정</button>
+            </div>
+            {(() => {
+              const sortedItems = [...filteredProjects].sort((a,b) => {
+                const damA = (a.note||"").includes("손상차손")?1:0;
+                const damB = (b.note||"").includes("손상차손")?1:0;
+                if (damA !== damB) return damA - damB;
+                if (sortOrder==="name") return (a.name||"").localeCompare(b.name||"", "ko");
+                if (sortOrder==="invested") return Math.abs(b.invested) - Math.abs(a.invested);
+                if (sortOrder==="recovered") return b.total_recovered - a.total_recovered;
+                if (sortOrder==="returnRate") {
+                  const ra = Math.abs(a.invested)>0?a.profit/Math.abs(a.invested):0;
+                  const rb = Math.abs(b.invested)>0?b.profit/Math.abs(b.invested):0;
+                  return rb - ra;
+                }
+                if (sortOrder==="investYear") {
+                  const ya = (a.invest_year||9999)*10+(parseInt((a.invest_quarter||"Q4").replace("Q",""))||4);
+                  const yb = (b.invest_year||9999)*10+(parseInt((b.invest_quarter||"Q4").replace("Q",""))||4);
+                  return yb - ya;
+                }
+                return 0;
+              });
+              const nonDamageItems = sortedItems.filter(p => !(p.note||"").includes("손상차손"));
+              const issueItems     = sortedItems.filter(p => getIssues(p).length>0 && !(p.note||"").includes("손상차손"));
+              const damageItems    = sortedItems.filter(p => (p.note||"").includes("손상차손"));
+              const Divider = ({label, count, color}) => (
+                <div style={{ gridColumn:"1/-1", display:"flex", alignItems:"center", gap:10, margin:"8px 0 4px" }}>
+                  <div style={{ height:2, flex:1, background: color+"33", borderRadius:2 }} />
+                  <span style={{ fontSize:11, fontWeight:700, color, whiteSpace:"nowrap",
+                    background: color+"15", padding:"3px 10px", borderRadius:20 }}>
+                    {label} {count}건
+                  </span>
+                  <div style={{ height:2, flex:1, background: color+"33", borderRadius:2 }} />
+                </div>
+              );
+              const renderCards = (list) => list.map(item => {
+                const issues = getIssues(item);
+                const invested = Math.abs(item.invested);
+                const isExpanded = expandedItem === item.id;
+                const rr = invested > 0 ? (item.profit/invested*100) : 0;
+                const hasIssue = issues.length > 0;
+                const isDamaged = (item.note||"").includes("손상차손");
+                // 이슈필터 활성 시 1분기 이내 여부 판정
+                const _now = new Date();
+                const _curY = _now.getFullYear(), _curQ = Math.ceil((_now.getMonth()+1)/3);
+                const _curIdx = _curY * 4 + _curQ;
+                const _itemIdx = Number(item.invest_year||0) * 4 + (parseInt((item.invest_quarter||"Q1").replace("Q",""))||1);
+                const isRecentIssue = hasIssue && (_curIdx - _itemIdx) <= 1;
+                // 이슈필터 ON일 때: 1분기이내=진한빨강, 그외=옅은빨강 / 필터 OFF: 기존
+                const _anyRecent = issueFilter && filteredProjects.some(r => {
+                  const ri = Number(r.invest_year||0)*4+(parseInt((r.invest_quarter||"Q1").replace("Q",""))||1);
+                  return getIssues(r).length>0 && (_curIdx - ri) <= 1;
+                });
+                // 손상자산: 회색 계열
+                const cardBg    = isDamaged ? "#f0f0f0"
+                  : !hasIssue ? "#f4f5f7"
+                  : issueFilter && isRecentIssue  ? "#ffd6d6"
+                  : issueFilter && !isRecentIssue && _anyRecent ? "#fff4f4"
+                  : "#fff5f5";
+                const cardBorder = isDamaged ? "2px solid #c0c0c0"
+                  : !hasIssue ? "2px solid #e2e4e9"
+                  : issueFilter && isRecentIssue  ? "2px solid #c53030"
+                  : issueFilter && !isRecentIssue && _anyRecent ? "2px solid #fecaca"
+                  : "2px solid #ef4444";
+                const cardGrad  = isDamaged ? "linear-gradient(135deg,#e0e0e0,#f0f0f0)"
+                  : !hasIssue ? "linear-gradient(135deg,#eaecf0,#f4f5f7)"
+                  : issueFilter && isRecentIssue  ? "linear-gradient(135deg,#ffb3b3,#ffd6d6)"
+                  : issueFilter && !isRecentIssue && _anyRecent ? "linear-gradient(135deg,#ffe4e4,#fff4f4)"
+                  : "linear-gradient(135deg,#ffe4e4,#fff5f5)";
+                return (
+                  <div key={item.id} onClick={() => setExpandedItem(isExpanded?null:item.id)}
+                    style={{ background: cardBg, borderRadius:12, cursor:"pointer",
+                      border: cardBorder,
+                      transition:"box-shadow 0.2s", overflow:"hidden" }}>
+                    {/* Card header */}
+                    <div style={{ padding:"14px 16px 10px", background: cardGrad }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
+                        <span style={{ fontSize:10, fontWeight:700, padding:"2px 7px", borderRadius:4,
+                          background:item.strategic?"#ede9fe":"#e0f2fe",
+                          color:item.strategic?"#7c3aed":"#0284c7" }}>
+                          {item.strategic?"전략":"비전략"}</span>
+                        <span style={{ fontSize:10, fontWeight:600, padding:"2px 7px", borderRadius:4,
+                          background:item.subcategory==="신사업"?"#fef3c7":item.subcategory==="공간테크"?"#d1fae5":"#f3f4f6",
+                          color:item.subcategory==="신사업"?"#b45309":item.subcategory==="공간테크"?"#065f46":"#6b7280" }}>
+                          {item.subcategory}</span>
+                        {isDamaged && <span style={{ fontSize:10, color:"#888", fontWeight:700, marginLeft:"auto" }}>🔻 손상</span>}
+                        {!isDamaged && hasIssue && <span style={{ fontSize:10, color:"#ef4444", fontWeight:700, marginLeft:"auto" }}>⚠️ 이슈</span>}
+                      </div>
+                      <div style={{ fontWeight:700, fontSize:14, color:"#1a1a2e",
+                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{item.name}</div>
+                      <div style={{ fontSize:11, color:"#94a3b8", marginTop:2,
+                        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", minHeight:16 }}>
+                        {item.target || ""}
+                      </div>
+                    </div>
+                    {/* Stats row */}
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr",
+                      borderTop: hasIssue ? "1px solid #fecaca" : "1px solid #dde0e6", padding:"10px 0" }}>
+                      {[
+                        { label:"투자액", value:fmt(invested)+"억", color:"#4f46e5" },
+                        { label:"회수액", value:fmt(item.total_recovered)+"억", color:"#0ea5e9" },
+                        { label:"수익률", value:fmt(rr)+"%", color:rr>=10?"#10b981":rr>0?"#f59e0b":"#ef4444" },
+                      ].map(s => (
+                        <div key={s.label} style={{ textAlign:"center", padding:"0 8px",
+                          borderRight:s.label!=="수익률" ? (hasIssue?"1px solid #fecaca":"1px solid #dde0e6") : "none" }}>
+                          <div style={{ fontSize:10, color:"#aaa", marginBottom:3 }}>{s.label}</div>
+                          <div style={{ fontSize:13, fontWeight:800, color:s.color }}>{s.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Expanded detail */}
+                    {isExpanded && (
+                      <div style={{ borderTop: hasIssue ? "1px solid #fecaca" : "1px solid #dde0e6",
+                        padding:"12px 16px", background: hasIssue ? "#fff0f0" : "#ebebee" }}>
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:10 }}>
+                          {[
+                            { label:"투자시기", value:item.invest_year||(item.invest_quarter||"") },
+                            { label:"투자법인", value:item.invest_corp||"-" },
+                            { label:"투자방식", value:item.invest_method||"-" },
+                            { label:"운용사",   value:item.manager||"-" },
+                            { label:"약정총액", value:fmt(Math.abs(item.contracted))+"억" },
+                            { label:"원금회수", value:fmt(item.principal_recovered)+"억" },
+                            { label:"수익",     value:fmt(item.profit)+"억",
+                              highlight:item.profit>0?"#10b981":item.profit<0?"#ef4444":undefined },
+                            { label:"미회수잔액", value:fmt(Math.abs(item.unrecovered))+"억",
+                              highlight:item.unrecovered<-10?"#ef4444":undefined },
+                          ].map(f => (
+                            <div key={f.label} style={{ background:"#fff", borderRadius:7, padding:"8px 10px",
+                              border: hasIssue ? "1px solid #fecaca" : "1px solid #d4d7de" }}>
+                              <div style={{ fontSize:10, color:"#aaa", marginBottom:2 }}>{f.label}</div>
+                              <div style={{ fontSize:12, fontWeight:700, color:f.highlight||"#1a1a2e" }}>{f.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {hasIssue && (
+                          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                            <div style={{ padding:"10px 12px", background:"#f8f9ff", borderRadius:8,
+                              border:"1px solid #c7d2fe" }}>
+                              <div style={{ fontSize:11, fontWeight:700, color:"#4f46e5", marginBottom:6 }}>📋 상세</div>
+                              <div style={{ fontSize:11, color:"#555" }}>—</div>
+                            </div>
+                            <div style={{ padding:"10px 12px", background:"#fff5f5", borderRadius:8,
+                              border:"1px solid #fecaca" }}>
+                              <div style={{ fontSize:11, fontWeight:700, color:"#ef4444", marginBottom:6 }}>🚨 이슈사항</div>
+                              {issues.map((issue,i) => (
+                                <div key={i} style={{ fontSize:11, color:"#dc2626", marginBottom:2 }}>• {issue}</div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {!hasIssue && (
+                          <div style={{ padding:"10px 12px", background:"#f8f9ff", borderRadius:8,
+                            border:"1px solid #c7d2fe" }}>
+                            <div style={{ fontSize:11, fontWeight:700, color:"#4f46e5", marginBottom:6 }}>📋 상세</div>
+                            <div style={{ fontSize:11, color:"#555" }}>—</div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              });
+              return (
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:12 }}>
+                  {renderCards(nonDamageItems)}
+                  {damageItems.length > 0 && <Divider label="🔻 손상 항목" count={damageItems.length} color="#9ca3af" />}
+                  {renderCards(damageItems)}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
   </script>
 </body>
 </html>
