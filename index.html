@@ -647,7 +647,7 @@ function InvestmentDashboard() {
                 <button key={y} onClick={() => setSelectedQuarterRange(y)}
                   style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
                     background:selectedQuarterRange===y?"#4f46e5":"#fff", color:selectedQuarterRange===y?"#fff":"#555", fontWeight:600 }}>
-                  {y==="all"?"전체":y==="recent"?"직전4분":String(y).slice(2)+"년"}</button>
+                  {y==="all"?"전체":y==="recent"?"직전4분기":String(y).slice(2)+"년"}</button>
               ))}
             </div>
           )}
