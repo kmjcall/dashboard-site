@@ -15,6 +15,15 @@
 </head>
 <body>
   <div id="root"></div>
+  <script>
+    window.exports = {};
+    window.module = { exports: {} };
+  </script>
   <script type="text/babel" src="./dashboard.jsx"></script>
+  <script type="text/babel">
+    const domNode = document.getElementById('root');
+    const root = ReactDOM.createRoot(domNode);
+    root.render(React.createElement(App));
+  </script>
 </body>
 </html>
