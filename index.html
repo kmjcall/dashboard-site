@@ -792,31 +792,35 @@ function InvestmentDashboard() {
             <div style={{ background:"#fff", borderRadius:12, padding:"4px 20px 20px", boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginTop:16 }}>
               <h3 style={{ margin:"8px 0 4px", fontSize:15, fontWeight:700, color:"#1a1a2e" }}>📊 연간 투자·회수·수익 추이</h3>
               <div style={{ fontSize:11, color:"#aaa", marginBottom:8 }}>(단위: 억원)</div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={annualChartData} margin={{ top:24, right:20, left:20, bottom:5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="year" tick={{ fontSize:12 }} />
-                  <YAxis tick={{ fontSize:11, fill:"#555" }}
-                    tickFormatter={v => v+"억"}
-                    ticks={[0,100,200,300,400,500,600]}
-                    domain={[0,600]}
-                    width={60} />
-                  <Tooltip formatter={v => [fmt(v)+"억원"]} />
-                  <Legend />
-                  <Bar dataKey="투자" fill="#4f46e5" radius={[3,3,0,0]}>
-                    <LabelList dataKey="투자" position="top" fontSize={10} fill="#4f46e5" fontWeight={700}
-                      formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
-                  </Bar>
-                  <Bar dataKey="회수" fill="#0ea5e9" radius={[3,3,0,0]}>
-                    <LabelList dataKey="회수" position="top" fontSize={10} fill="#0ea5e9" fontWeight={700}
-                      formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
-                  </Bar>
-                  <Bar dataKey="수익" fill="#10b981" radius={[3,3,0,0]}>
-                    <LabelList dataKey="수익" position="top" fontSize={10} fill="#10b981" fontWeight={700}
-                      formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
+                <div style={{ minWidth:700 }}>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={annualChartData} margin={{ top:24, right:20, left:20, bottom:5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="year" tick={{ fontSize:12 }} />
+                      <YAxis tick={{ fontSize:11, fill:"#555" }}
+                        tickFormatter={v => v+"억"}
+                        ticks={[0,100,200,300,400,500,600]}
+                        domain={[0,600]}
+                        width={60} />
+                      <Tooltip formatter={v => [fmt(v)+"억원"]} />
+                      <Legend />
+                      <Bar dataKey="투자" fill="#4f46e5" radius={[3,3,0,0]}>
+                        <LabelList dataKey="투자" position="top" fontSize={10} fill="#4f46e5" fontWeight={700}
+                          formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
+                      </Bar>
+                      <Bar dataKey="회수" fill="#0ea5e9" radius={[3,3,0,0]}>
+                        <LabelList dataKey="회수" position="top" fontSize={10} fill="#0ea5e9" fontWeight={700}
+                          formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
+                      </Bar>
+                      <Bar dataKey="수익" fill="#10b981" radius={[3,3,0,0]}>
+                        <LabelList dataKey="수익" position="top" fontSize={10} fill="#10b981" fontWeight={700}
+                          formatter={v => v > 0 ? Math.round(v)+"억" : ""} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -871,18 +875,22 @@ function InvestmentDashboard() {
                   수익: dataMap[qkey]?.수익 || 0,
                 }));
                 return (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={chartData} margin={{ top:5, right:20, left:0, bottom:5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis dataKey="quarter" tick={{ fontSize:12 }} />
-                      <YAxis tick={{ fontSize:11 }} tickFormatter={v => v >= 1000 ? (v/1000)+"천억" : v+"억"} width={52} />
-                      <Tooltip formatter={v => [fmt(v)+"억원"]} />
-                      <Legend />
-                      <Bar dataKey="투자" fill="#4f46e5" radius={[3,3,0,0]} />
-                      <Bar dataKey="회수" fill="#0ea5e9" radius={[3,3,0,0]} />
-                      <Bar dataKey="수익" fill="#10b981" radius={[3,3,0,0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <div style={{ overflowX:"auto", WebkitOverflowScrolling:"touch" }}>
+                    <div style={{ minWidth:400 }}>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <BarChart data={chartData} margin={{ top:5, right:20, left:0, bottom:5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="quarter" tick={{ fontSize:12 }} />
+                          <YAxis tick={{ fontSize:11 }} tickFormatter={v => v >= 1000 ? (v/1000)+"천억" : v+"억"} width={52} />
+                          <Tooltip formatter={v => [fmt(v)+"억원"]} />
+                          <Legend />
+                          <Bar dataKey="투자" fill="#4f46e5" radius={[3,3,0,0]} />
+                          <Bar dataKey="회수" fill="#0ea5e9" radius={[3,3,0,0]} />
+                          <Bar dataKey="수익" fill="#10b981" radius={[3,3,0,0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
                 );
               })()}
             </div>
