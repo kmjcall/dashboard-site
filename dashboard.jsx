@@ -27,7 +27,7 @@ const KPICard = ({ label, value, sub, color }) => (
     <div style={{ display:"inline-block", background:color+"1a", borderRadius:6,
       padding:"3px 10px", fontSize:11, color:color, fontWeight:700, marginBottom:10 }}>{label}</div>
     <div style={{ fontSize:26, fontWeight:800, color:"#1a1a2e" }}>{value}</div>
-    {sub && <div style={{ fontSize:14, color:"#475569", marginTop:6, fontWeight:600 }}>{sub}</div>}
+    {sub && <div style={{ fontSize:12, color:"#aaa", marginTop:4 }}>{sub}</div>}
   </div>
 );
 
@@ -389,7 +389,7 @@ export default function InvestmentDashboard() {
     if (selectedStrategic === "strategic" && !r.strategic) return false;
     if (selectedStrategic === "nonstrategic" && r.strategic) return false;
     if (selectedSubcat !== "all" && r.subcategory !== selectedSubcat) return false;
-    if (issueFilter && (getIssues(r).length === 0 || (r.note||"").includes("손상차손"))) return false;
+    if (issueFilter && getIssues(r).length === 0) return false;
     return true;
   }), [projects, selectedStrategic, selectedSubcat, issueFilter]);
 
@@ -435,7 +435,7 @@ export default function InvestmentDashboard() {
       groups[key].profit    += r.profit;
     });
     const entries = Object.entries(groups).sort(([a],[b]) => a.localeCompare(b));
-    const filtered = (selectedQuarterRange === "all" || selectedQuarterRange === "recent") ? entries
+    const filtered = selectedQuarterRange === "all" ? entries
       : entries.filter(([k]) => k.startsWith(String(selectedQuarterRange)));
     return filtered.map(([key,v]) => ({
       quarter: key,
@@ -545,7 +545,7 @@ export default function InvestmentDashboard() {
             <div>
               <div style={{ fontSize:11, color:"#a5b4fc", letterSpacing:2, marginBottom:6, textTransform:"uppercase" }}>투자사업팀</div>
               <h1 style={{ margin:0, fontSize:26, fontWeight:900 }}>투자자산 현황</h1>
-              <div style={{ fontSize:13, color:"#94a3b8", marginTop:6 }}>기준일: 2025.11.14</div>
+              <div style={{ fontSize:13, color:"#94a3b8", marginTop:6 }}>기준일: 2025.11.14 · 총 {projects.length}개 프로젝트 · 단위: 억원</div>
             </div>
           </div>
           <div style={{ display:"flex", gap:8 }}>
@@ -591,7 +591,7 @@ export default function InvestmentDashboard() {
             <div style={{ display:"flex", alignItems:"center", gap:6, marginLeft:8 }}>
               <span style={{ fontSize:14, color:"#111", fontWeight:800 }}>정렬:</span>
               {[{id:"invested",label:"투자액순"},{id:"recovered",label:"회수액순"},{id:"returnRate",label:"수익률순"},{id:"investYear",label:"투자시기순"}].map(s => (
-                <button key={s.id} onClick={() => { setSortOrder(s.id); setIssueFilter(false); }}
+                <button key={s.id} onClick={() => setSortOrder(s.id)}
                   style={{ padding:"6px 12px", borderRadius:6, cursor:"pointer", fontSize:12, fontWeight:600,
                     background: sortOrder===s.id ? "#4f46e5" : "#fff",
                     color: sortOrder===s.id ? "#fff" : "#555",
@@ -757,11 +757,11 @@ export default function InvestmentDashboard() {
           <div>
             <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
               <span style={{ fontSize:13, color:"#888", alignSelf:"center" }}>연도 필터:</span>
-              {["all","recent",...allYears].map(y => (
+              {["all",...allYears].map(y => (
                 <button key={y} onClick={() => setSelectedQuarterRange(y)}
                   style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
                     background:selectedQuarterRange===y?"#4f46e5":"#fff", color:selectedQuarterRange===y?"#fff":"#555", fontWeight:600 }}>
-                  {y==="all"?"전체":y==="recent"?"직전 4분기":y}</button>
+                  {y==="all"?"전체":y}</button>
               ))}
             </div>
             {(() => {
@@ -830,22 +830,19 @@ export default function InvestmentDashboard() {
               <h3 style={{ margin:"0 0 16px", fontSize:15, fontWeight:700, color:"#1a1a2e" }}>분기별 상세 내역 (단위: 억원)</h3>
               <div style={{ overflowX:"auto" }}>
                 {(() => {
+                  // 현재 분기 기준 최근 4분기 고정 생성
                   const now = new Date();
                   const curY = now.getFullYear();
                   const curQ = Math.ceil((now.getMonth()+1)/3);
+                  const recentQuarters = [];
+                  let y = curY, q = curQ;
+                  for (let i = 0; i < 4; i++) {
+                    recentQuarters.unshift(`${y}Q${q}`);
+                    q--;
+                    if (q < 1) { q = 4; y--; }
+                  }
                   const dataMap = {};
                   quarterlyChartData.forEach(r => { dataMap[r.quarter] = r; });
-                  // 연도 선택 시 해당 연도 4분기, 전체/직전4분기이면 최근 4분기
-                  let tableQuarters = [];
-                  if (selectedQuarterRange === "all" || selectedQuarterRange === "recent") {
-                    let y = curY, q = curQ;
-                    for (let i = 0; i < 4; i++) {
-                      tableQuarters.unshift(`${y}Q${q}`);
-                      q--; if (q < 1) { q = 4; y--; }
-                    }
-                  } else {
-                    tableQuarters = ["Q1","Q2","Q3","Q4"].map(q => `${selectedQuarterRange}${q}`);
-                  }
                   return (
                     <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
                       <thead><tr style={{ background:"#f8f9fb" }}>
@@ -854,7 +851,7 @@ export default function InvestmentDashboard() {
                             color:"#666", fontWeight:700, borderBottom:"2px solid #e2e8f0", whiteSpace:"nowrap" }}>{h}</th>
                         ))}
                       </tr></thead>
-                      <tbody>{tableQuarters.map(qkey => {
+                      <tbody>{recentQuarters.map(qkey => {
                         const row = dataMap[qkey];
                         const inv = row ? row.투자 : null;
                         const rec = row ? row.회수 : null;
@@ -1017,11 +1014,22 @@ export default function InvestmentDashboard() {
                 style={{ padding:"7px 16px", borderRadius:8, border:"1px solid #10b981", background:"#f0fdf4",
                   color:"#065f46", fontSize:12, fontWeight:700, cursor:"pointer" }}>➕ 항목 추가 / 수정</button>
             </div>
-            {(() => {
-              const sortedItems = [...filteredProjects].sort((a,b) => {
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:12 }}>
+              {[...filteredProjects].sort((a,b) => {
+                // 1순위: 손상차손 항목 맨 아래
                 const damA = (a.note||"").includes("손상차손")?1:0;
                 const damB = (b.note||"").includes("손상차손")?1:0;
                 if (damA !== damB) return damA - damB;
+                // 2순위: 이슈 항목 그 다음 (손상 제외)
+                const issueA = getIssues(a).length>0?1:0, issueB = getIssues(b).length>0?1:0;
+                if (issueA !== issueB) return issueA - issueB;
+                // 이슈 항목끼리는 최근 투자순(연도 내림차순)으로 정렬
+                if (issueA === 1) {
+                  const ya = Number(a.invest_year||0)*10+(parseInt((a.invest_quarter||"Q1").replace("Q",""))||1);
+                  const yb = Number(b.invest_year||0)*10+(parseInt((b.invest_quarter||"Q1").replace("Q",""))||1);
+                  return yb - ya;
+                }
+                // 3순위: 선택 정렬 기준
                 if (sortOrder==="name") return (a.name||"").localeCompare(b.name||"", "ko");
                 if (sortOrder==="invested") return Math.abs(b.invested) - Math.abs(a.invested);
                 if (sortOrder==="recovered") return b.total_recovered - a.total_recovered;
@@ -1036,21 +1044,7 @@ export default function InvestmentDashboard() {
                   return yb - ya;
                 }
                 return 0;
-              });
-              const nonDamageItems = sortedItems.filter(p => !(p.note||"").includes("손상차손"));
-              const issueItems     = sortedItems.filter(p => getIssues(p).length>0 && !(p.note||"").includes("손상차손"));
-              const damageItems    = sortedItems.filter(p => (p.note||"").includes("손상차손"));
-              const Divider = ({label, count, color}) => (
-                <div style={{ gridColumn:"1/-1", display:"flex", alignItems:"center", gap:10, margin:"8px 0 4px" }}>
-                  <div style={{ height:2, flex:1, background: color+"33", borderRadius:2 }} />
-                  <span style={{ fontSize:11, fontWeight:700, color, whiteSpace:"nowrap",
-                    background: color+"15", padding:"3px 10px", borderRadius:20 }}>
-                    {label} {count}건
-                  </span>
-                  <div style={{ height:2, flex:1, background: color+"33", borderRadius:2 }} />
-                </div>
-              );
-              const renderCards = (list) => list.map(item => {
+              }).map(item => {
                 const issues = getIssues(item);
                 const invested = Math.abs(item.invested);
                 const isExpanded = expandedItem === item.id;
@@ -1176,15 +1170,8 @@ export default function InvestmentDashboard() {
                     )}
                   </div>
                 );
-              });
-              return (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px, 1fr))", gap:12 }}>
-                  {renderCards(nonDamageItems)}
-                  {damageItems.length > 0 && <Divider label="🔻 손상 항목" count={damageItems.length} color="#9ca3af" />}
-                  {renderCards(damageItems)}
-                </div>
-              );
-            })()}
+              })}
+            </div>
           </div>
         )}
       </div>
