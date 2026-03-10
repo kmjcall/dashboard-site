@@ -38,13 +38,13 @@ const getIssues = (item) => {
 };
 
 const KPICard = ({ label, value, sub, color }) => (
-  <div style={{ background:"#fff", borderRadius:12, padding:"12px 24px 20px",
+  <div className="kpi-card" style={{ background:"#fff", borderRadius:12, padding:"12px 24px 20px",
     boxShadow:"0 2px 12px rgba(0,0,0,0.07)", flex:1, minWidth:0,
     borderTop:"4px solid "+color }}>
     <div style={{ display:"inline-block", background:color+"1a", borderRadius:6,
       padding:"3px 10px", fontSize:11, color:color, fontWeight:700, marginBottom:10 }}>{label}</div>
-    <div style={{ fontSize:26, fontWeight:800, color:"#1a1a2e" }}>{value}</div>
-    {sub && <div style={{ fontSize:14, color:"#475569", marginTop:6, fontWeight:600 }}>{sub}</div>}
+    <div className="kpi-value" style={{ fontSize:26, fontWeight:800, color:"#1a1a2e" }}>{value}</div>
+    {sub && <div className="kpi-sub" style={{ fontSize:14, color:"#475569", marginTop:6, fontWeight:600 }}>{sub}</div>}
   </div>
 );
 
@@ -561,8 +561,11 @@ function InvestmentDashboard() {
         .dash-tabs { gap: 6px !important; margin-bottom: 16px !important; }
         .dash-tabs button { padding: 7px 10px !important; font-size: 12px !important; }
         .dash-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-        .dash-kpi-value { font-size: 18px !important; }
-        .dash-kpi-sub { font-size: 11px !important; }
+        .kpi-card { padding: 10px 12px 12px !important; }
+        .kpi-value { font-size: 16px !important; word-break: break-all !important; }
+        .kpi-sub { font-size: 10px !important; margin-top: 3px !important; }
+        .dash-kpi-value { font-size: 16px !important; }
+        .dash-kpi-sub { font-size: 10px !important; }
         .dash-two-col { grid-template-columns: 1fr !important; gap: 12px !important; }
         .dash-card { padding: 14px 12px !important; }
         .dash-filters { gap: 6px !important; margin-bottom: 14px !important; }
@@ -620,22 +623,37 @@ function InvestmentDashboard() {
         </div>
 
         {/* Filters */}
-        <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:20, alignItems:"center" }}>
-          <span style={{ fontSize:14, color:"#111", fontWeight:800 }}>대분류:</span>
-          {[["all","전체"],["strategic","전략자산"],["nonstrategic","수익자산"]].map(([v,l]) => (
-            <button key={v} onClick={() => setSelectedStrategic(v)}
-              style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
-                background:selectedStrategic===v?"#4f46e5":"#fff", color:selectedStrategic===v?"#fff":"#555", fontWeight:600 }}>{l}</button>
-          ))}
-          <span style={{ fontSize:14, color:"#111", fontWeight:800, marginLeft:8 }}>중분류:</span>
-          {[["all","전체"],["신사업","신사업"],["공간테크","공간테크"],["기타","기타"]].map(([v,l]) => (
-            <button key={v} onClick={() => setSelectedSubcat(v)}
-              style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
-                background:selectedSubcat===v?"#4f46e5":"#fff", color:selectedSubcat===v?"#fff":"#555", fontWeight:600 }}>{l}</button>
-          ))}
+        <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:20 }}>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+            <span style={{ fontSize:13, color:"#111", fontWeight:800, minWidth:48 }}>대분류:</span>
+            {[["all","전체"],["strategic","전략자산"],["nonstrategic","수익자산"]].map(([v,l]) => (
+              <button key={v} onClick={() => setSelectedStrategic(v)}
+                style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
+                  background:selectedStrategic===v?"#4f46e5":"#fff", color:selectedStrategic===v?"#fff":"#555", fontWeight:600 }}>{l}</button>
+            ))}
+          </div>
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+            <span style={{ fontSize:13, color:"#111", fontWeight:800, minWidth:48 }}>중분류:</span>
+            {[["all","전체"],["신사업","신사업"],["공간테크","공간테크"],["기타","기타"]].map(([v,l]) => (
+              <button key={v} onClick={() => setSelectedSubcat(v)}
+                style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
+                  background:selectedSubcat===v?"#4f46e5":"#fff", color:selectedSubcat===v?"#fff":"#555", fontWeight:600 }}>{l}</button>
+            ))}
+          </div>
+          {activeTab === "quarterly" && (
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+              <span style={{ fontSize:13, color:"#111", fontWeight:800, minWidth:48 }}>연도:</span>
+              {["all","recent",...allYears].map(y => (
+                <button key={y} onClick={() => setSelectedQuarterRange(y)}
+                  style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
+                    background:selectedQuarterRange===y?"#4f46e5":"#fff", color:selectedQuarterRange===y?"#fff":"#555", fontWeight:600 }}>
+                  {y==="all"?"전체":y==="recent"?"직전4분":String(y).slice(2)+"년"}</button>
+              ))}
+            </div>
+          )}
           {activeTab === "projects" && (
-            <div style={{ display:"flex", alignItems:"center", gap:6, marginLeft:8 }}>
-              <span style={{ fontSize:14, color:"#111", fontWeight:800 }}>정렬:</span>
+            <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+              <span style={{ fontSize:13, color:"#111", fontWeight:800, minWidth:48 }}>정렬:</span>
               {[{id:"invested",label:"투자액순"},{id:"recovered",label:"회수액순"},{id:"returnRate",label:"수익률순"},{id:"investYear",label:"투자시기순"}].map(s => (
                 <button key={s.id} onClick={() => { setSortOrder(s.id); setIssueFilter(false); }}
                   style={{ padding:"6px 12px", borderRadius:6, cursor:"pointer", fontSize:12, fontWeight:600,
@@ -661,7 +679,7 @@ function InvestmentDashboard() {
         {/* ── OVERVIEW TAB ── */}
         {activeTab === "overview" && (
           <div>
-            <div style={{ display:"flex", gap:16, marginBottom:20, flexWrap:"wrap" }}>
+            <div className="dash-kpi-grid" style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:16, marginBottom:20 }}>
               <KPICard label="총 투자액" value={fmt(totalInvested)+"억원"} icon="💰" color="#4f46e5" sub={filteredProjects.length+"개 프로젝트"} />
               <KPICard label="총 회수액" value={fmt(totalRecovered)+"억원"} icon="🔄" color="#0ea5e9" sub={"회수율 "+fmt(totalInvested>0?totalRecovered/totalInvested*100:0)+"%"} />
               <KPICard label="총 수익" value={fmt(totalProfit)+"억원"} icon="📈" color="#10b981" sub={"미회수 "+fmt(totalInvested-totalRecovered)+"억원"} />
@@ -806,15 +824,6 @@ function InvestmentDashboard() {
         {/* ── QUARTERLY TAB ── */}
         {activeTab === "quarterly" && (
           <div>
-            <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-              <span style={{ fontSize:13, color:"#888", alignSelf:"center" }}>연도 필터:</span>
-              {["all","recent",...allYears].map(y => (
-                <button key={y} onClick={() => setSelectedQuarterRange(y)}
-                  style={{ padding:"6px 14px", borderRadius:6, border:"1px solid #e2e8f0", cursor:"pointer", fontSize:12,
-                    background:selectedQuarterRange===y?"#4f46e5":"#fff", color:selectedQuarterRange===y?"#fff":"#555", fontWeight:600 }}>
-                  {y==="all"?"전체":y==="recent"?"직전 4분기":y}</button>
-              ))}
-            </div>
             {(() => {
               const now = new Date();
               const curY = now.getFullYear();
