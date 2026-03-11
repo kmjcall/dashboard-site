@@ -634,7 +634,7 @@ function InvestmentDashboard() {
         /* Tabs */
         , React.createElement('div', { className: "dash-tabs", style: { display:"flex", gap:8, marginBottom:24 },}
           , [{id:"overview",label:"종합현황"},{id:"quarterly",label:"분기별 내역"},{id:"projects",label:"항목별 현황"}]
-            .map(t => React.createElement('button', { key: t.id, style: tabStyle(t.id), onClick: () => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); },}, t.label))
+            .map(t => React.createElement('button', { key: t.id, style: tabStyle(t.id), onClick: () => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); setExpandedItem(null); setExpandedYears({}); setExpandedQuarterKey(null); },}, t.label))
         )
 
         /* Filters */
