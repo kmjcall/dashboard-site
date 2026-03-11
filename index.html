@@ -10,7 +10,8 @@
   <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }</style>
+  <style>* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+@media (max-width: 768px) { .desc-col { display: none !important; } }</style>
 </head>
 <body>
   <div id="root"></div>
@@ -1079,7 +1080,7 @@ function InvestmentDashboard() {
                           rows.push(React.createElement('tr', { key: qkey+"_hdr",
                             style:{ background:"#dbeafe", borderBottom:"1px solid #bfdbfe" }},
                             React.createElement('td', { style:{ padding:"6px 10px 6px 52px", fontWeight:700, fontSize:12, color:"#1d4ed8", width:"20%" }}, "항목"),
-                            React.createElement('td', { style:{ padding:"6px 10px", fontWeight:700, fontSize:12, color:"#6366f1", width:"35%" }}, "설명"),
+                            React.createElement('td', { className:"desc-col", style:{ padding:"6px 10px", fontWeight:700, fontSize:12, color:"#6366f1", width:"35%" }}, "설명"),
                             React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#dc2626" }}, "투자액"),
                             React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#0ea5e9" }}, "회수액"),
                             React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#0ea5e9" }}, "원금"),
@@ -1101,7 +1102,7 @@ function InvestmentDashboard() {
                             rows.push(React.createElement('tr', { key: qkey+"_item_"+idx,
                               style:{ background: "#fff", borderBottom:"1px solid #dbeafe" }},
                               React.createElement('td', { style:{ padding:"6px 10px 6px 52px", fontSize:12, color:"#374151", lineHeight:1.4, whiteSpace:"nowrap", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis" }}, item.name),
-                              React.createElement('td', { style:{ padding:"4px 6px", width:"35%" }},
+                              React.createElement('td', { className:"desc-col", style:{ padding:"4px 6px", width:"35%" }},
                                 React.createElement('input', {
                                   type:"text",
                                   value: noteVal,
@@ -1110,7 +1111,7 @@ function InvestmentDashboard() {
                                   placeholder: "",
                                   style:{
                                     width:"100%", minWidth:180, padding:"3px 7px", fontSize:11,
-                                    border:"1px solid #c7d2fe", borderRadius:5, background:"#fff",
+                                    border:"none", borderRadius:5, background:"transparent",
                                     color:"#3730a3", outline:"none",
                                     fontFamily:"inherit"
                                   }
@@ -1138,7 +1139,7 @@ function InvestmentDashboard() {
                           rows.push(React.createElement('tr', { key: qkey+"_sum",
                             style:{ background:"#dbeafe", borderBottom:"2px solid #93c5fd" }},
                             React.createElement('td', { style:{ padding:"6px 10px 6px 52px", fontWeight:700, fontSize:12, color:"#1d4ed8" }}, "합계"),
-                            React.createElement('td', { style:{ padding:"6px 8px" }}),
+                            React.createElement('td', { className:"desc-col", style:{ padding:"6px 8px" }}),
                             React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#dc2626" }}, inv>0?fmt(inv)+"억":"–"),
                             React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#0ea5e9" }}, totalRecQ>0?fmt(totalRecQ)+"억":"–"),
                             React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#0ea5e9" }}, rec>0?fmt(rec)+"억":"–"),
