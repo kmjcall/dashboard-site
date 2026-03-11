@@ -1099,9 +1099,27 @@ function InvestmentDashboard() {
                             const itemNet = itemTotalRec - item.investment;
                             const noteKey = qkey + "::" + item.name;
                             const noteVal = quarterNotes[noteKey] || "";
+                            const linkedProject = SEED_PROJECTS.find(p => p.name === item.name);
                             rows.push(React.createElement('tr', { key: qkey+"_item_"+idx,
                               style:{ background: "#fff", borderBottom:"1px solid #dbeafe" }},
-                              React.createElement('td', { style:{ padding:"6px 10px 6px 52px", fontSize:12, color:"#374151", lineHeight:1.4, whiteSpace:"nowrap", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis" }}, item.name),
+                              React.createElement('td', {
+                                style:{ padding:"6px 10px 6px 52px", fontSize:12, lineHeight:1.4, whiteSpace:"nowrap", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis",
+                                  color: linkedProject ? "#4f46e5" : "#374151",
+                                  cursor: linkedProject ? "pointer" : "default",
+                                  textDecoration: linkedProject ? "underline" : "none" },
+                                onClick: linkedProject ? (e => {
+                                  e.stopPropagation();
+                                  setActiveTab("projects");
+                                  setExpandedItem(linkedProject.id);
+                                  setIssueFilter(false);
+                                  setSelectedStrategic("all");
+                                  setSelectedSubcat("all");
+                                  setTimeout(() => {
+                                    const el = document.getElementById("portfolio-card-"+linkedProject.id);
+                                    if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
+                                  }, 100);
+                                }) : undefined
+                              }, item.name),
                               React.createElement('td', { className:"desc-col", style:{ padding:"4px 6px", width:"35%" }},
                                 React.createElement('input', {
                                   type:"text",
@@ -1111,8 +1129,9 @@ function InvestmentDashboard() {
                                   placeholder: "",
                                   style:{
                                     width:"100%", minWidth:180, padding:"3px 7px", fontSize:11,
-                                    border:"none", borderRadius:5, background:"transparent",
-                                    color:"#3730a3", outline:"none",
+                                    border:"none", borderRadius:0, background:"transparent",
+                                    color:"#3730a3", outline:"none", boxShadow:"none",
+                                    WebkitAppearance:"none", appearance:"none",
                                     fontFamily:"inherit"
                                   }
                                 })
@@ -1249,7 +1268,7 @@ function InvestmentDashboard() {
                   : issueFilter && !isRecentIssue && _anyRecent ? "linear-gradient(135deg,#ffe4e4,#fff4f4)"
                   : "linear-gradient(135deg,#ffe4e4,#fff5f5)";
                 return (
-                  React.createElement('div', { key: item.id, onClick: () => setExpandedItem(isExpanded?null:item.id),
+                  React.createElement('div', { key: item.id, id: "portfolio-card-"+item.id, onClick: () => setExpandedItem(isExpanded?null:item.id),
                     style: { background: cardBg, borderRadius:12, cursor:"pointer",
                       border: cardBorder,
                       transition:"box-shadow 0.2s", overflow:"hidden" },}
