@@ -10,8 +10,7 @@
   <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
-@media (max-width: 768px) { .desc-col { display: none !important; } }</style>
+  <style>* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }</style>
 </head>
 <body>
   <div id="root"></div>
@@ -258,7 +257,7 @@ function SettingsModal({ projects, quarterly, onClose, onSave }) {
           , React.createElement('button', { onClick: onClose, style: { background:"rgba(255,255,255,0.15)", border:"none",
             color:"#fff", width:32, height:32, borderRadius:8, cursor:"pointer", fontSize:18 },}, "×")
         )
-        , React.createElement('div', { style: { padding:"24px 28px" },}
+        , React.createElement('div', { style: { padding:"24px 28px", maxHeight:"70vh", overflowY:"auto" },}
           , React.createElement('div', { style: { display:"flex", gap:10, marginBottom:16, alignItems:"center" },}
             , React.createElement('input', { value: search, onChange: e => setSearch(e.target.value), placeholder: "🔍 사업명/대상 검색..."  ,
               style: { flex:1, padding:"9px 12px", borderRadius:8, border:"1px solid #d1d5db", fontSize:13, outline:"none" },} )
@@ -400,17 +399,6 @@ function InvestmentDashboard() {
   const [expandedItem, setExpandedItem] = useState(null);
   const [issueFilter, setIssueFilter] = useState(false);
   const [expandedYears, setExpandedYears] = useState({});
-  const [expandedQuarterKey, setExpandedQuarterKey] = useState(null);
-  // 분기 항목별 설명 메모: { "2025Q4::항목명": "설명텍스트" }
-  const [quarterNotes, setQuarterNotes] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("quarterNotes") || "{}"); } catch { return {}; }
-  });
-  const saveQuarterNote = (qkey, name, val) => {
-    const key = qkey + "::" + name;
-    const updated = { ...quarterNotes, [key]: val };
-    setQuarterNotes(updated);
-    try { localStorage.setItem("quarterNotes", JSON.stringify(updated)); } catch {}
-  };
   const [sortOrder, setSortOrder] = useState("name");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSettings, setShowSettings] = useState(false);
@@ -604,7 +592,7 @@ function InvestmentDashboard() {
       /* Header */
       , React.createElement('div', { className: "dash-header", style: { background:"linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)", padding:"14px 32px", color:"#fff" },}
         , React.createElement('div', { className: "dash-header-inner", style: { maxWidth:1200, margin:"0 auto", display:"flex", alignItems:"flex-start", justifyContent:"space-between" },}
-          , React.createElement('div', { style: { display:"flex", alignItems:"center", gap:16, cursor:"pointer" }, onClick: () => { setActiveTab("overview"); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); setSearchQuery(""); setExpandedItem(null); setExpandedYears({}); setExpandedQuarterKey(null); }},
+          , React.createElement('div', { style: { display:"flex", alignItems:"center", gap:16, cursor:"pointer" }, onClick: () => { setActiveTab("overview"); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); setSearchQuery(""); setExpandedItem(null); setExpandedYears({}); setExpandedQuarterKey(null); } },
             , React.createElement('div', { style: { width:52, height:52, flexShrink:0 },}
               , React.createElement('img', { src: "data:image/png;base64,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", style: {width:"100%",height:"100%",objectFit:"contain"},})
             )
@@ -619,19 +607,14 @@ function InvestmentDashboard() {
 
               , React.createElement('input', { type: "file", accept: ".xlsx,.xls", style: { display:"none" }, onChange: handleExcelUpload,} )
             )
-            , React.createElement('button', { onClick: async () => {
-                try {
-                  const res = await fetch(location.href);
-                  const text = await res.text();
-                  const blob = new Blob([text], { type:"text/html" });
-                  const a = document.createElement("a");
-                  a.href = URL.createObjectURL(blob);
-                  a.download = "index.html";
-                  a.click();
-                  URL.revokeObjectURL(a.href);
-                } catch(e) {
-                  alert("로컬 파일에서는 저장이 불가합니다. GitHub Pages에서 사용해주세요.");
-                }
+            , React.createElement('button', { onClick: () => {
+                const html2 = document.documentElement.outerHTML;
+                const blob = new Blob([html2], { type:"text/html" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = "index.html";
+                a.click();
+                URL.revokeObjectURL(a.href);
               },
               style: { background:"rgba(99,102,241,0.25)", border:"1px solid rgba(99,102,241,0.5)",
                 color:"#a5b4fc", padding:"8px 16px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600 },}, "💾 저장"
@@ -652,7 +635,7 @@ function InvestmentDashboard() {
         /* Tabs */
         , React.createElement('div', { className: "dash-tabs", style: { display:"flex", gap:8, marginBottom:24 },}
           , [{id:"overview",label:"종합현황"},{id:"quarterly",label:"분기별 내역"},{id:"projects",label:"항목별 현황"}]
-            .map(t => React.createElement('button', { key: t.id, style: tabStyle(t.id), onClick: () => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); setSearchQuery(""); setExpandedItem(null); setExpandedYears({}); setExpandedQuarterKey(null); },}, t.label))
+            .map(t => React.createElement('button', { key: t.id, style: tabStyle(t.id), onClick: () => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); },}, t.label))
         )
 
         /* Filters */
@@ -825,8 +808,8 @@ function InvestmentDashboard() {
             , React.createElement('div', { style: { background:"#fff", borderRadius:12, padding:"4px 20px 20px", boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginTop:16 },}
               , React.createElement('h3', { style: { margin:"8px 0 4px", fontSize:15, fontWeight:700, color:"#1a1a2e" },}, "📊 연간 투자·회수·수익 추이"   )
               , React.createElement('div', { style: { fontSize:11, color:"#aaa", marginBottom:8 },}, "(단위: 억원)" )
-              , React.createElement('div', null
-                , React.createElement('div', null
+              , React.createElement('div', { style: { overflowX:"auto", WebkitOverflowScrolling:"touch" },}
+                , React.createElement('div', { style: { minWidth:700 },}
                   , React.createElement(ResponsiveContainer, { width: "100%", height: 300,}
                     , React.createElement(BarChart, { data: annualChartData, margin: { top:24, right:20, left:20, bottom:5 },}
                       , React.createElement(CartesianGrid, { strokeDasharray: "3 3" , stroke: "#f0f0f0",} )
@@ -928,7 +911,7 @@ function InvestmentDashboard() {
                 React.createElement(QKPICard, { label:"수익률",   value:fmt(curRate)+"%",  color:"#f59e0b", qkey:curQKey, cur:curRate, prev:prevRate, isRate:true }),
               );
             })()
-            , React.createElement('div', { style: { background:"#fff", borderRadius:12, padding:"14px 20px 4px", boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginBottom:12 },}
+            , React.createElement('div', { style: { background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginBottom:20 },}
               , React.createElement('h3', { style: { margin:"0 0 16px", fontSize:15, fontWeight:700, color:"#1a1a2e" },}, "분기별 투자·회수·수익 (단위: 억원)"   )
               , (() => {
                 const now = new Date();
@@ -957,10 +940,10 @@ function InvestmentDashboard() {
                 }));
                 const isManyQuarters = chartData.length > 4;
                 return (
-                  React.createElement('div', null
-                    , React.createElement('div', null
-                      , React.createElement(ResponsiveContainer, { width: "100%", height: 300,}
-                        , React.createElement(BarChart, { data: chartData, margin: { top:16, right:16, left:0, bottom: isManyQuarters ? 46 : 0 },}
+                  React.createElement('div', { style: { overflowX:"auto", WebkitOverflowScrolling:"touch" },}
+                    , React.createElement('div', { style: { minWidth: isManyQuarters ? 700 : 400 },}
+                      , React.createElement(ResponsiveContainer, { width: "100%", height: 280,}
+                        , React.createElement(BarChart, { data: chartData, margin: { top:20, right:20, left:0, bottom: isManyQuarters ? 50 : 5 },}
                           , React.createElement(CartesianGrid, { strokeDasharray: "3 3" , stroke: "#f0f0f0",} )
                           , React.createElement(XAxis, { dataKey: "quarter",
                               tick: { fontSize: isManyQuarters ? 10 : 12 },
@@ -989,7 +972,7 @@ function InvestmentDashboard() {
             )
             , React.createElement('div', { style: { background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)" },}
               , React.createElement('h3', { style: { margin:"0 0 16px", fontSize:15, fontWeight:700, color:"#1a1a2e" },}, "분기별 상세 내역 (단위: 억원)"    )
-              , React.createElement('div', { style: { overflowX:"auto", overflowAnchor:"none" },}
+              , React.createElement('div', { style: { overflowX:"auto" },}
                 , (() => {
                   const now = new Date();
                   const curY = now.getFullYear();
@@ -1013,7 +996,7 @@ function InvestmentDashboard() {
                     years = [parseInt(selectedQuarterRange)];
                   }
 
-                  const thStyle = { padding:"8px 10px", textAlign:"right", color:"#666", fontWeight:700,
+                  const thStyle = { padding:"10px 14px", textAlign:"right", color:"#666", fontWeight:700,
                     borderBottom:"2px solid #e2e8f0", whiteSpace:"nowrap" };
 
                   const rows = [];
@@ -1043,17 +1026,16 @@ function InvestmentDashboard() {
                       onClick: () => setExpandedYears(prev => ({...prev, [year]: !prev[year]})),
                       style: { cursor:"pointer", background: isCurYear?"#f5f3ff":"#f8f9fb",
                         borderBottom:"2px solid #e2e8f0" }},
-                      React.createElement('td', { style: { padding:"9px 10px", fontWeight:800, color: isCurYear?"#4f46e5":"#1a1a2e", fontSize:14 }},
+                      React.createElement('td', { style: { padding:"11px 14px", fontWeight:800, color: isCurYear?"#4f46e5":"#1a1a2e", fontSize:14 }},
                         React.createElement('span', { style:{ marginRight:6, fontSize:12 }}, isExpanded ? "▼" : "▶"),
                         `${year}년`,
                         isCurYear && React.createElement('span', { style:{ fontSize:10, marginLeft:6, color:"#4f46e5" }}, "현재")
                       ),
-                      React.createElement('td', null),
-                      React.createElement('td', { style:{ padding:"9px 10px", textAlign:"right", fontWeight:700 }}, sumInv>0?fmt(sumInv)+"억":"–"),
-                      React.createElement('td', { style:{ padding:"9px 10px", textAlign:"right", fontWeight:700, color: totalRec>0?"#0ea5e9":"#aaa" }}, totalRec>0?fmt(totalRec)+"억":"–"),
-                      React.createElement('td', { style:{ padding:"9px 10px", textAlign:"right", fontWeight:700, color: sumRec>0?"#0ea5e9":"#aaa" }}, sumRec>0?fmt(sumRec)+"억":"–"),
-                      React.createElement('td', { style:{ padding:"9px 10px", textAlign:"right", fontWeight:700, color: sumPrf>0?"#10b981":"#aaa" }}, sumPrf>0?fmt(sumPrf)+"억":"–"),
-                      React.createElement('td', { style:{ padding:"9px 10px", textAlign:"right", fontWeight:800, color: net>=0?"#10b981":"#ef4444" }},
+                      React.createElement('td', { style:{ padding:"11px 14px", textAlign:"right", fontWeight:700 }}, sumInv>0?fmt(sumInv)+"억":"–"),
+                      React.createElement('td', { style:{ padding:"11px 14px", textAlign:"right", fontWeight:700, color: totalRec>0?"#0ea5e9":"#aaa" }}, totalRec>0?fmt(totalRec)+"억":"–"),
+                      React.createElement('td', { style:{ padding:"11px 14px", textAlign:"right", fontWeight:700, color: sumRec>0?"#0ea5e9":"#aaa" }}, sumRec>0?fmt(sumRec)+"억":"–"),
+                      React.createElement('td', { style:{ padding:"11px 14px", textAlign:"right", fontWeight:700, color: sumPrf>0?"#10b981":"#aaa" }}, sumPrf>0?fmt(sumPrf)+"억":"–"),
+                      React.createElement('td', { style:{ padding:"11px 14px", textAlign:"right", fontWeight:800, color: net>=0?"#10b981":"#ef4444" }},
                         (net>=0?"+":"")+fmt(net)+"억")
                     ));
 
@@ -1063,135 +1045,27 @@ function InvestmentDashboard() {
                         const totalRecQ = rec + prf;
                         const netQ = totalRecQ - inv;
                         const isCurQ = qkey === `${curY}Q${curQ}`;
-                        const isQExpanded = expandedQuarterKey === qkey;
-                        const qItems = SEED_QUARTERLY_PROJECTS[qkey] || [];
-                        const hasItems = qItems.length > 0;
-
-                        // 분기 요약 행 (클릭 시 항목 드릴다운)
                         rows.push(React.createElement('tr', { key: qkey,
-                          onClick: () => hasItems && setExpandedQuarterKey(prev => prev === qkey ? null : qkey),
-                          style:{ background: isQExpanded?"#eef2ff": isCurQ?"#ede9fe":"#fff",
-                            borderBottom:"1px solid #f0f0f0",
-                            cursor: hasItems ? "pointer" : "default" }},
-                          React.createElement('td', { style:{ padding:"8px 10px 8px 32px", color: isCurQ?"#4f46e5":"#64748b", fontSize:13 }},
-                            React.createElement('span', { style:{ marginRight:5, fontSize:10,
-                              color: isQExpanded?"#4f46e5": hasItems?"#94a3b8":"#e2e8f0" }},
-                              isQExpanded ? "▼" : "▶"),
+                          style:{ background: isCurQ?"#ede9fe":"#fff", borderBottom:"1px solid #f0f0f0" }},
+                          React.createElement('td', { style:{ padding:"8px 14px 8px 32px", color: isCurQ?"#4f46e5":"#64748b", fontSize:13 }},
                             qkey,
-                            isCurQ && React.createElement('span', { style:{ fontSize:10, marginLeft:4, color:"#4f46e5" }}, "현재"),
-                            hasItems && React.createElement('span', { style:{ fontSize:10, marginLeft:5, color:"#94a3b8" }}, qItems.length+"건")
+                            isCurQ && React.createElement('span', { style:{ fontSize:10, marginLeft:4, color:"#4f46e5" }}, "▶ 현재")
                           ),
-                          React.createElement('td', null),
-                          React.createElement('td', { style:{ padding:"8px 8px", textAlign:"right", fontSize:13, color:"#374151" }}, inv>0?fmt(inv)+"억":"–"),
-                          React.createElement('td', { style:{ padding:"8px 8px", textAlign:"right", fontSize:13, color: totalRecQ>0?"#0ea5e9":"#aaa" }}, totalRecQ>0?fmt(totalRecQ)+"억":"–"),
-                          React.createElement('td', { style:{ padding:"8px 8px", textAlign:"right", fontSize:13, color: rec>0?"#0ea5e9":"#aaa" }}, rec>0?fmt(rec)+"억":"–"),
-                          React.createElement('td', { style:{ padding:"8px 8px", textAlign:"right", fontSize:13, color: prf>0?"#10b981":"#aaa" }}, prf>0?fmt(prf)+"억":"–"),
-                          React.createElement('td', { style:{ padding:"8px 8px", textAlign:"right", fontSize:13, fontWeight:700,
+                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color:"#374151" }}, inv>0?fmt(inv)+"억":"–"),
+                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color: totalRecQ>0?"#0ea5e9":"#aaa" }}, totalRecQ>0?fmt(totalRecQ)+"억":"–"),
+                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color: rec>0?"#0ea5e9":"#aaa" }}, rec>0?fmt(rec)+"억":"–"),
+                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color: prf>0?"#10b981":"#aaa" }}, prf>0?fmt(prf)+"억":"–"),
+                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, fontWeight:700,
                             color: (inv===0&&totalRecQ===0)?"#aaa":netQ>=0?"#10b981":"#ef4444" }},
                             (inv===0&&totalRecQ===0) ? "–" : (netQ>=0?"+":"")+fmt(netQ)+"억")
                         ));
-
-                        // 항목 드릴다운 행 (분기 클릭 시 펼쳐짐)
-                        if (isQExpanded && hasItems) {
-                          // 헤더 행 (7열: 항목 | 설명 | 투자액 | 회수액 | 원금 | 수익 | 순현금흐름)
-                          rows.push(React.createElement('tr', { key: qkey+"_hdr",
-                            style:{ background:"#dbeafe", borderBottom:"1px solid #bfdbfe" }},
-                            React.createElement('td', { style:{ padding:"6px 10px 6px 52px", fontWeight:700, fontSize:12, color:"#1d4ed8", width:"20%" }}, "항목"),
-                            React.createElement('td', { className:"desc-col", style:{ padding:"6px 10px", fontWeight:700, fontSize:12, color:"#6366f1", width:"35%" }}, "설명"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#dc2626" }}, "투자액"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#0ea5e9" }}, "회수액"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#0ea5e9" }}, "원금"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#10b981" }}, "수익"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontWeight:700, fontSize:12, color:"#374151" }}, "순현금흐름")
-                          ));
-
-                          // 항목 상세 행
-                          const sortedItems = [...qItems].sort((a,b) => {
-                            if (a.recovery>0 && b.recovery===0) return -1;
-                            if (a.recovery===0 && b.recovery>0) return 1;
-                            return b.investment - a.investment;
-                          });
-                          sortedItems.forEach((item, idx) => {
-                            const itemTotalRec = item.recovery + item.profit;
-                            const itemNet = itemTotalRec - item.investment;
-                            const noteKey = qkey + "::" + item.name;
-                            const noteVal = quarterNotes[noteKey] || "";
-                            const linkedProject = SEED_PROJECTS.find(p => p.name === item.name);
-                            rows.push(React.createElement('tr', { key: qkey+"_item_"+idx,
-                              style:{ background: "#fff", borderBottom:"1px solid #dbeafe" }},
-                              React.createElement('td', {
-                                style:{ padding:"6px 10px 6px 52px", fontSize:12, lineHeight:1.4, whiteSpace:"nowrap", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis",
-                                  color: linkedProject ? "#4f46e5" : "#374151",
-                                  cursor: linkedProject ? "pointer" : "default",
-                                  textDecoration: linkedProject ? "underline" : "none" },
-                                onClick: linkedProject ? (e => {
-                                  e.stopPropagation();
-                                  setActiveTab("projects");
-                                  setExpandedItem(linkedProject.id);
-                                  setIssueFilter(false);
-                                  setSelectedStrategic("all");
-                                  setSelectedSubcat("all");
-                                  setTimeout(() => {
-                                    const el = document.getElementById("portfolio-card-"+linkedProject.id);
-                                    if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
-                                  }, 100);
-                                }) : undefined
-                              }, item.name),
-                              React.createElement('td', { className:"desc-col", style:{ padding:"4px 6px", width:"35%" }},
-                                React.createElement('input', {
-                                  type:"text",
-                                  value: noteVal,
-                                  onChange: e => saveQuarterNote(qkey, item.name, e.target.value),
-                                  onClick: e => e.stopPropagation(),
-                                  placeholder: "",
-                                  style:{
-                                    width:"100%", minWidth:180, padding:"3px 7px", fontSize:11,
-                                    border:"none", borderRadius:0, background:"transparent",
-                                    color:"#3730a3", outline:"none", boxShadow:"none",
-                                    WebkitAppearance:"none", appearance:"none",
-                                    fontFamily:"inherit"
-                                  }
-                                })
-                              ),
-                              React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12,
-                                color: item.investment>0?"#dc2626":"#d1d5db", fontWeight: item.investment>0?600:400 }},
-                                item.investment>0?fmt(item.investment)+"억":"–"),
-                              React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12,
-                                color: itemTotalRec>0?"#0ea5e9":"#d1d5db", fontWeight: itemTotalRec>0?600:400 }},
-                                itemTotalRec>0?fmt(itemTotalRec)+"억":"–"),
-                              React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12,
-                                color: item.recovery>0?"#0ea5e9":"#d1d5db", fontWeight: item.recovery>0?600:400 }},
-                                item.recovery>0?fmt(item.recovery)+"억":"–"),
-                              React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12,
-                                color: item.profit>0?"#10b981":"#d1d5db", fontWeight: item.profit>0?600:400 }},
-                                item.profit>0?fmt(item.profit)+"억":"–"),
-                              React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:600,
-                                color: (item.investment===0&&itemTotalRec===0)?"#d1d5db":itemNet>=0?"#10b981":"#ef4444" }},
-                                (item.investment===0&&itemTotalRec===0)?"–":(itemNet>=0?"+":"")+fmt(itemNet)+"억")
-                            ));
-                          });
-
-                          // 합계 행
-                          rows.push(React.createElement('tr', { key: qkey+"_sum",
-                            style:{ background:"#dbeafe", borderBottom:"2px solid #93c5fd" }},
-                            React.createElement('td', { style:{ padding:"6px 10px 6px 52px", fontWeight:700, fontSize:12, color:"#1d4ed8" }}, "합계"),
-                            React.createElement('td', { className:"desc-col", style:{ padding:"6px 8px" }}),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#dc2626" }}, inv>0?fmt(inv)+"억":"–"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#0ea5e9" }}, totalRecQ>0?fmt(totalRecQ)+"억":"–"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#0ea5e9" }}, rec>0?fmt(rec)+"억":"–"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:700, color:"#10b981" }}, prf>0?fmt(prf)+"억":"–"),
-                            React.createElement('td', { style:{ padding:"6px 8px", textAlign:"right", fontSize:12, fontWeight:800,
-                              color: netQ>=0?"#10b981":"#ef4444" }},
-                              (netQ>=0?"+":"")+fmt(netQ)+"억")
-                          ));
-                        }
                       });
                     }
                   });
 
                   return React.createElement('table', { style:{ width:"100%", borderCollapse:"collapse", fontSize:13 },}
-                    , React.createElement('thead', null, React.createElement('tr', { style:{ background:"#f8f9fb", position:"sticky", top:0, zIndex:1 },}
-                      , ["연도/분기","","투자액","회수액","원금","수익","순현금흐름"].map(h => (
+                    , React.createElement('thead', null, React.createElement('tr', { style:{ background:"#f8f9fb" },}
+                      , ["연도/분기","투자액","회수액","원금","수익","순현금흐름"].map(h => (
                         React.createElement('th', { key:h, style:{ ...thStyle, textAlign:h==="연도/분기"?"left":"right" }}, h)
                       ))
                     ))
@@ -1201,7 +1075,123 @@ function InvestmentDashboard() {
               )
             )
 
+            /* ── 항목상세 ── */
+            , (() => {
+              const now = new Date();
+              const curY = now.getFullYear();
+              const curQ = Math.ceil((now.getMonth()+1)/3);
 
+              const getLatestQKey = () => {
+                let y = curY, q = curQ;
+                for (let i = 0; i < 8; i++) {
+                  const key = `${y}Q${q}`;
+                  if (SEED_QUARTERLY_PROJECTS[key] && SEED_QUARTERLY_PROJECTS[key].length > 0) return key;
+                  q--; if (q < 1) { q = 4; y--; }
+                }
+                return null;
+              };
+
+              let displayQKey;
+              if (selectedQuarterRange === "all" || selectedQuarterRange === "recent") {
+                displayQKey = getLatestQKey();
+              } else {
+                for (let q = 4; q >= 1; q--) {
+                  const key = `${selectedQuarterRange}Q${q}`;
+                  if (SEED_QUARTERLY_PROJECTS[key] && SEED_QUARTERLY_PROJECTS[key].length > 0) {
+                    displayQKey = key; break;
+                  }
+                }
+              }
+
+              const items = displayQKey ? (SEED_QUARTERLY_PROJECTS[displayQKey] || []) : [];
+              const isCurrent = displayQKey === `${curY}Q${curQ}`;
+              const sorted = [...items].sort((a,b) => {
+                const ra = a.recovery > 0 ? 1 : 0;
+                const rb = b.recovery > 0 ? 1 : 0;
+                if (ra !== rb) return rb - ra;
+                return b.investment - a.investment;
+              });
+
+              const thStyle = { padding:"12px 16px", textAlign:"center", fontWeight:700, fontSize:13,
+                color:"#fff", background:"#b0bcd4", borderRight:"1px solid #c8d0df", whiteSpace:"nowrap" };
+              const tdStyle = (align) => ({ padding:"11px 14px", textAlign: align||"center",
+                fontSize:13, borderBottom:"1px solid #e8ecf0", borderRight:"1px solid #e8ecf0", color:"#374151" });
+
+              return React.createElement('div', { style: { background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginTop:16 },}
+                , React.createElement('div', { style: { display:"flex", alignItems:"center", gap:10, marginBottom:16 },}
+                  , React.createElement('h3', { style: { margin:0, fontSize:15, fontWeight:700, color:"#1a1a2e" },}, "당기내역")
+                  , displayQKey && React.createElement('span', { style: { fontSize:12, fontWeight:700, padding:"3px 10px", borderRadius:6,
+                    background: isCurrent?"#ede9fe":"#f1f5f9", color: isCurrent?"#4f46e5":"#64748b" },}, displayQKey)
+                  , React.createElement('span', { style: { fontSize:11, color:"#aaa" },}, items.length + "건")
+                )
+                , items.length === 0
+                  ? React.createElement('div', { style: { display:"flex", alignItems:"center", justifyContent:"center", height:80,
+                      color:"#cbd5e1", fontSize:13, borderRadius:8, border:"1.5px dashed #e2e8f0", background:"#f8f9fb" },}, "해당 분기 변동 내역이 없습니다")
+                  : React.createElement('div', { style: { overflowX:"auto" },}
+                      , React.createElement('table', { style: { width:"100%", borderCollapse:"collapse", fontSize:13, border:"1px solid #e8ecf0" },}
+                          , React.createElement('thead', null
+                            , React.createElement('tr', null
+                              , React.createElement('th', { style: { ...thStyle, textAlign:"left", width:"22%" }}, "항목")
+                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "투자액")
+                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "회수액")
+                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "원금")
+                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "수익")
+                              , React.createElement('th', { style: { ...thStyle, borderRight:"none", width:"46%" }}, "상세")
+                            )
+                          )
+                          , React.createElement('tbody', null
+                            , sorted.map((item, idx) => {
+                              const hasInv = item.investment > 0;
+                              const hasRec = item.recovery > 0;
+                              const hasPro = item.profit > 0;
+                              const totalRec = item.recovery + item.profit;
+                              const bg = idx % 2 === 0 ? "#fff" : "#f9fafc";
+                              return React.createElement('tr', { key: idx, style: { background: bg },}
+                                , React.createElement('td', { style: { ...tdStyle("left"), fontWeight:600, color:"#1a1a2e" }}, item.name)
+                                , React.createElement('td', { style: { ...tdStyle(), color: hasInv?"#4f46e5":"#bbb" }}, hasInv ? item.investment+"억" : "–")
+                                , React.createElement('td', { style: { ...tdStyle(), color: (hasRec||hasPro)?"#0ea5e9":"#bbb" }}, (hasRec||hasPro) ? fmt(totalRec)+"억" : "–")
+                                , React.createElement('td', { style: { ...tdStyle(), color: hasRec?"#0ea5e9":"#bbb" }}, hasRec ? item.recovery+"억" : "–")
+                                , React.createElement('td', { style: { ...tdStyle(), color: hasPro?"#10b981":"#bbb" }}, hasPro ? item.profit+"억" : "–")
+                                , React.createElement('td', { style: { padding:"6px 8px", borderBottom:"1px solid #e8ecf0" },}
+                                  , React.createElement('input', { type:"text", placeholder:"",
+                                    style: { width:"100%", border:"none", background:"transparent", fontSize:13,
+                                      color:"#374151", outline:"none", padding:"4px 6px", fontFamily:"inherit" }
+                                  })
+                                )
+                              );
+                            })
+                            , Array.from({ length: Math.max(0, 5 - sorted.length) }).map((_, idx) =>
+                              React.createElement('tr', { key: "empty"+idx, style: { background: (sorted.length+idx)%2===0?"#fff":"#f9fafc" },}
+                                , React.createElement('td', { style: tdStyle("left") }, "")
+                                , React.createElement('td', { style: tdStyle() }, "")
+                                , React.createElement('td', { style: tdStyle() }, "")
+                                , React.createElement('td', { style: tdStyle() }, "")
+                                , React.createElement('td', { style: tdStyle() }, "")
+                                , React.createElement('td', { style: { padding:"6px 8px", borderBottom:"1px solid #e8ecf0" } }, "")
+                              )
+                            )
+                            , (() => {
+                              const totalInv = sorted.reduce((s,r) => s + r.investment, 0);
+                              const totalRec = sorted.reduce((s,r) => s + r.recovery + r.profit, 0);
+                              const totalPrincipal = sorted.reduce((s,r) => s + r.recovery, 0);
+                              const totalProfit = sorted.reduce((s,r) => s + r.profit, 0);
+                              const sumStyle = { padding:"12px 14px", textAlign:"center", fontWeight:800,
+                                fontSize:13, borderTop:"2px solid #b0bcd4", borderRight:"1px solid #e8ecf0",
+                                background:"#f1f4f8", color:"#1a1a2e" };
+                              return React.createElement('tr', null
+                                , React.createElement('td', { style: { ...sumStyle, textAlign:"left" }}, "합계")
+                                , React.createElement('td', { style: { ...sumStyle, color: totalInv>0?"#4f46e5":"#bbb" }}, totalInv>0 ? fmt(totalInv)+"억" : "–")
+                                , React.createElement('td', { style: { ...sumStyle, color: totalRec>0?"#0ea5e9":"#bbb" }}, totalRec>0 ? fmt(totalRec)+"억" : "–")
+                                , React.createElement('td', { style: { ...sumStyle, color: totalPrincipal>0?"#0ea5e9":"#bbb" }}, totalPrincipal>0 ? fmt(totalPrincipal)+"억" : "–")
+                                , React.createElement('td', { style: { ...sumStyle, color: totalProfit>0?"#10b981":"#bbb" }}, totalProfit>0 ? fmt(totalProfit)+"억" : "–")
+                                , React.createElement('td', { style: { ...sumStyle, borderRight:"none" }}, "")
+                              );
+                            })()
+                          )
+                        )
+                    )
+              );
+            })()
           )
         )
 
@@ -1254,9 +1244,6 @@ function InvestmentDashboard() {
                     (p.name||"").toLowerCase().includes(q) ||
                     (p.target||"").toLowerCase().includes(q))
                 : filteredProjects;
-
-              // 검색 결과 1건이면 자동 펼침은 onChange에서 처리됨
-
               const sortedItems = [...searchFiltered].sort((a,b) => {
                 const damA = (a.note||"").includes("손상차손")?1:0;
                 const damB = (b.note||"").includes("손상차손")?1:0;
@@ -1276,14 +1263,14 @@ function InvestmentDashboard() {
                 }
                 return 0;
               });
+              if (q && sortedItems.length === 0) {
+                return React.createElement('div', { style: { textAlign:"center", padding:"60px 0", color:"#94a3b8", fontSize:15 }},
+                  "🔍 '", searchQuery, "' 에 해당하는 항목이 없습니다."
+                );
+              }
               const nonDamageItems = sortedItems.filter(p => !(p.note||"").includes("손상차손"));
               const issueItems     = sortedItems.filter(p => getIssues(p).length>0 && !(p.note||"").includes("손상차손"));
               const damageItems    = sortedItems.filter(p => (p.note||"").includes("손상차손"));
-              if (q && sortedItems.length === 0) {
-                return React.createElement('div', { style: { textAlign:"center", padding:"60px 0", color:"#94a3b8", fontSize:15 }},
-                  "🔍 ", React.createElement('strong', null, `"${searchQuery}"`), " 에 해당하는 항목이 없습니다."
-                );
-              }
               const Divider = ({label, count, color}) => (
                 React.createElement('div', { style: { gridColumn:"1/-1", display:"flex", alignItems:"center", gap:10, margin:"8px 0 4px" },}
                   , React.createElement('div', { style: { height:2, flex:1, background: color+"33", borderRadius:2 },} )
@@ -1329,7 +1316,7 @@ function InvestmentDashboard() {
                   : issueFilter && !isRecentIssue && _anyRecent ? "linear-gradient(135deg,#ffe4e4,#fff4f4)"
                   : "linear-gradient(135deg,#ffe4e4,#fff5f5)";
                 return (
-                  React.createElement('div', { key: item.id, id: "portfolio-card-"+item.id, onClick: () => setExpandedItem(isExpanded?null:item.id),
+                  React.createElement('div', { key: item.id, onClick: () => setExpandedItem(isExpanded?null:item.id),
                     style: { background: cardBg, borderRadius:12, cursor:"pointer",
                       border: cardBorder,
                       transition:"box-shadow 0.2s", overflow:"hidden" },}
