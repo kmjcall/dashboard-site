@@ -689,6 +689,29 @@ function InvestmentDashboard() {
                   fontWeight:700,
                   boxShadow: issueFilter ? "0 0 0 3px rgba(239,68,68,0.2)" : "none" },}
                 , issueFilter ? "✅ 이슈항목만 보기 중" : "⚠️ 이슈항목만")
+              , React.createElement('div', { style: { position:"relative", marginLeft:8 },}
+                , React.createElement('span', { style: { position:"absolute", left:8, top:"50%", transform:"translateY(-50%)", fontSize:12, pointerEvents:"none" }}, "🔍")
+                , React.createElement('input', {
+                    type:"text",
+                    value: searchQuery,
+                    onChange: e => {
+                      const val = e.target.value;
+                      setSearchQuery(val);
+                      setExpandedItem(null);
+                      const q2 = val.trim().toLowerCase();
+                      if (q2) {
+                        const matches = filteredProjects.filter(p =>
+                          (p.name||"").toLowerCase().includes(q2) ||
+                          (p.target||"").toLowerCase().includes(q2));
+                        if (matches.length === 1) setExpandedItem(matches[0].id);
+                      }
+                    },
+                    placeholder: "검색",
+                    style: { width:140, padding:"5px 8px 5px 26px", borderRadius:6,
+                      border:"1.5px solid #c7d2fe", fontSize:12, outline:"none",
+                      fontFamily:"inherit", background:"#f8f8ff", color:"#1a1a2e" }
+                })
+              )
             )
           )
         )
@@ -1200,39 +1223,9 @@ function InvestmentDashboard() {
         , activeTab === "projects" && (
           React.createElement('div', null
             , React.createElement('div', { style: { display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, gap:12 },}
-              , React.createElement('div', { style: { display:"flex", alignItems:"center", gap:8, flex:1 },}
-                , React.createElement('div', { style: { position:"relative", maxWidth:360, flex:1 },}
-                  , React.createElement('span', { style: { position:"absolute", left:10, top:"50%", transform:"translateY(-50%)", fontSize:15, pointerEvents:"none" }}, "🔍")
-                  , React.createElement('input', {
-                      type:"text",
-                      value: searchQuery,
-                      onChange: e => {
-                        const val = e.target.value;
-                        setSearchQuery(val);
-                        setExpandedItem(null);
-                        const q2 = val.trim().toLowerCase();
-                        if (q2) {
-                          const matches = filteredProjects.filter(p =>
-                            (p.name||"").toLowerCase().includes(q2) ||
-                            (p.target||"").toLowerCase().includes(q2));
-                          if (matches.length === 1) setExpandedItem(matches[0].id);
-                        }
-                      },
-                      placeholder: "검색",
-                      style: { width:"100%", padding:"7px 12px 7px 34px", borderRadius:8,
-                        border:"1.5px solid #c7d2fe", fontSize:13, outline:"none",
-                        fontFamily:"inherit", background:"#f8f8ff", color:"#1a1a2e" }
-                  })
-                )
-                , searchQuery && React.createElement('button', {
-                    onClick: () => { setSearchQuery(""); setExpandedItem(null); },
-                    style: { padding:"7px 12px", borderRadius:8, border:"1px solid #e2e8f0",
-                      background:"#fff", color:"#888", fontSize:12, cursor:"pointer", whiteSpace:"nowrap" }
-                  }, "✕ 초기화")
-                , React.createElement('div', { style: { fontSize:13, color:"#888", whiteSpace:"nowrap" }}, "총 "
-                  , React.createElement('strong', { style: { color:"#1a1a2e" }}, filteredProjects.length), "개 항목 · 이슈 "
-                  , React.createElement('strong', { style: { color:"#ef4444" }}, filteredProjects.filter(r=>getIssues(r).length>0).length), "건"
-                )
+              , React.createElement('div', { style: { fontSize:13, color:"#888" }}, "총 "
+                , React.createElement('strong', { style: { color:"#1a1a2e" }}, filteredProjects.length), "개 항목 · 이슈 "
+                , React.createElement('strong', { style: { color:"#ef4444" }}, filteredProjects.filter(r=>getIssues(r).length>0).length), "건"
               )
               , React.createElement('button', { onClick: () => setShowSettings(true),
                 style: { padding:"7px 16px", borderRadius:8, border:"1px solid #10b981", background:"#f0fdf4",
