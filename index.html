@@ -303,10 +303,6 @@ function SettingsModal({ projects, quarterly, onClose, onSave }) {
                   , isEditing && editForm && (
                     React.createElement('div', { style: { padding:"16px 14px", borderTop:"1px solid #e0e7ff", background:"#fafbff" },}
                       , React.createElement(EditFields, { form: editForm, setForm: setEditForm,} )
-                      , React.createElement('div', { style: { display:"flex", gap:8, marginTop:4 },}
-                        , React.createElement(Btn, { label: "저장", onClick: saveEdit,} )
-                        , React.createElement(Btn, { label: "취소", onClick: () => { setEditingId(null); setEditForm(null); }, bg: "#f3f4f6", color: "#555",} )
-                      )
                     )
                   )
                 )
@@ -361,8 +357,27 @@ function SettingsModal({ projects, quarterly, onClose, onSave }) {
             )
           )
           , React.createElement('div', { style: { display:"flex", gap:10 },}
-            , React.createElement(Btn, { label: "저장 후 닫기"  , onClick: () => onSave(localProjects, localQuarterly),} )
-            , React.createElement(Btn, { label: "닫기", onClick: onClose, bg: "#f3f4f6", color: "#555",} )
+            , React.createElement(Btn, { label: "저장 후 닫기", onClick: () => {
+              let finalProjects = localProjects;
+              let finalQuarterly = localQuarterly;
+              if (editingId && editForm) {
+                const f = editForm;
+                const inv = parseFloat(f.invested)||0;
+                const rec = parseFloat(f.total_recovered)||0;
+                const pro = parseFloat(f.profit)||0;
+                const updated = { ...f, contracted:-Math.abs(parseFloat(f.contracted)||inv),
+                  invested:-inv, principal_recovered:parseFloat(f.principal_recovered)||0,
+                  profit:pro, total_recovered:rec, unrecovered:rec-inv };
+                const old = localProjects.find(p => p.id === editingId);
+                let newQ = localQuarterly;
+                newQ = applyQuarterlyDelta(newQ, old.invest_year, old.invest_quarter, -Math.abs(old.invested), -old.total_recovered, -old.profit);
+                newQ = applyQuarterlyDelta(newQ, updated.invest_year, updated.invest_quarter, inv, rec, pro);
+                finalProjects = localProjects.map(p => p.id === editingId ? updated : p);
+                finalQuarterly = newQ;
+              }
+              onSave(finalProjects, finalQuarterly);
+            },} )
+            , React.createElement(Btn, { label: "취소", onClick: onClose, bg: "#f3f4f6", color: "#555",} )
           )
         )
       )
@@ -399,6 +414,7 @@ function InvestmentDashboard() {
   const [expandedItem, setExpandedItem] = useState(null);
   const [issueFilter, setIssueFilter] = useState(false);
   const [expandedYears, setExpandedYears] = useState({});
+  const [expandedQuarterKey, setExpandedQuarterKey] = useState(null);
   const [sortOrder, setSortOrder] = useState("name");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSettings, setShowSettings] = useState(false);
@@ -636,7 +652,7 @@ function InvestmentDashboard() {
         /* Tabs */
         , React.createElement('div', { className: "dash-tabs", style: { display:"flex", gap:8, marginBottom:24 },}
           , [{id:"overview",label:"종합현황"},{id:"quarterly",label:"분기별 내역"},{id:"projects",label:"항목별 현황"}]
-            .map(t => React.createElement('button', { key: t.id, style: tabStyle(t.id), onClick: () => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); },}, t.label))
+            .map(t => React.createElement('button', { key: t.id, style: tabStyle(t.id), onClick: () => { setActiveTab(t.id); setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all"); setSortOrder("name"); setSearchQuery(""); setExpandedItem(null); setExpandedYears({}); setExpandedQuarterKey(null); },}, t.label))
         )
 
         /* Filters */
@@ -1071,13 +1087,23 @@ function InvestmentDashboard() {
                         const totalRecQ = rec + prf;
                         const netQ = totalRecQ - inv;
                         const isCurQ = qkey === `${curY}Q${curQ}`;
+                        const isQExpanded = expandedQuarterKey === qkey;
+                        const qItems = SEED_QUARTERLY_PROJECTS[qkey] || [];
+                        const hasItems = qItems.length > 0;
+
                         rows.push(React.createElement('tr', { key: qkey,
-                          style:{ background: isCurQ?"#ede9fe":"#fff", borderBottom:"1px solid #f0f0f0" }},
+                          onClick: () => hasItems && setExpandedQuarterKey(prev => prev === qkey ? null : qkey),
+                          style:{ background: isQExpanded?"#eef2ff": isCurQ?"#ede9fe":"#fff",
+                            borderBottom:"1px solid #f0f0f0", cursor: hasItems?"pointer":"default" }},
                           React.createElement('td', { style:{ padding:"8px 14px 8px 32px", color: isCurQ?"#4f46e5":"#64748b", fontSize:13 }},
+                            React.createElement('span', { style:{ marginRight:5, fontSize:10,
+                              color: isQExpanded?"#4f46e5": hasItems?"#94a3b8":"#e2e8f0" }},
+                              isQExpanded ? "▼" : "▶"),
                             qkey,
-                            isCurQ && React.createElement('span', { style:{ fontSize:10, marginLeft:4, color:"#4f46e5" }}, "▶ 현재")
+                            isCurQ && React.createElement('span', { style:{ fontSize:10, marginLeft:4, color:"#4f46e5" }}, "현재"),
+                            hasItems && React.createElement('span', { style:{ fontSize:10, marginLeft:5, color:"#94a3b8" }}, qItems.length+"건")
                           ),
-                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color:"#374151" }}, inv>0?fmt(inv)+"억":"–"),
+                          React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontWeight:700 }}, inv>0?fmt(inv)+"억":"–"),
                           React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color: totalRecQ>0?"#0ea5e9":"#aaa" }}, totalRecQ>0?fmt(totalRecQ)+"억":"–"),
                           React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color: rec>0?"#0ea5e9":"#aaa" }}, rec>0?fmt(rec)+"억":"–"),
                           React.createElement('td', { style:{ padding:"8px 14px", textAlign:"right", fontSize:13, color: prf>0?"#10b981":"#aaa" }}, prf>0?fmt(prf)+"억":"–"),
@@ -1085,6 +1111,48 @@ function InvestmentDashboard() {
                             color: (inv===0&&totalRecQ===0)?"#aaa":netQ>=0?"#10b981":"#ef4444" }},
                             (inv===0&&totalRecQ===0) ? "–" : (netQ>=0?"+":"")+fmt(netQ)+"억")
                         ));
+
+                        if (isQExpanded && hasItems) {
+                          rows.push(React.createElement('tr', { key: qkey+"_hdr",
+                            style:{ background:"#dbeafe", borderBottom:"1px solid #bfdbfe" }},
+                            React.createElement('td', { style:{ padding:"5px 10px 5px 52px", fontSize:11, fontWeight:700, color:"#1e40af" }}, "항목"),
+                            React.createElement('td', { style:{ padding:"5px 10px", fontSize:11, fontWeight:700, color:"#1e40af", textAlign:"right" }}, "투자액"),
+                            React.createElement('td', { style:{ padding:"5px 10px", fontSize:11, fontWeight:700, color:"#1e40af", textAlign:"right" }}, "회수액"),
+                            React.createElement('td', { style:{ padding:"5px 10px", fontSize:11, fontWeight:700, color:"#1e40af", textAlign:"right" }}, "원금"),
+                            React.createElement('td', { style:{ padding:"5px 10px", fontSize:11, fontWeight:700, color:"#1e40af", textAlign:"right" }}, "수익"),
+                            React.createElement('td', { style:{ padding:"5px 10px", fontSize:11, fontWeight:700, color:"#1e40af", textAlign:"right" }}, "순현금흐름")
+                          ));
+                          [...qItems].sort((a,b) => b.investment - a.investment).forEach((item, idx) => {
+                            const linkedProject = SEED_PROJECTS.find(p => p.name === item.name);
+                            const totalRecItem = item.recovery + item.profit;
+                            const netItem = totalRecItem - item.investment;
+                            rows.push(React.createElement('tr', { key: qkey+"_item_"+idx,
+                              style:{ background:"#fff", borderBottom:"1px solid #dbeafe" }},
+                              React.createElement('td', {
+                                style:{ padding:"6px 10px 6px 52px", fontSize:12, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis",
+                                  color: linkedProject?"#4f46e5":"#374151",
+                                  cursor: linkedProject?"pointer":"default",
+                                  textDecoration: linkedProject?"underline":"none" },
+                                onClick: linkedProject ? (e => {
+                                  e.stopPropagation();
+                                  setActiveTab("projects"); setExpandedItem(linkedProject.id);
+                                  setIssueFilter(false); setSelectedStrategic("all"); setSelectedSubcat("all");
+                                  setTimeout(() => {
+                                    const el = document.getElementById("portfolio-card-"+linkedProject.id);
+                                    if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
+                                  }, 100);
+                                }) : undefined
+                              }, item.name),
+                              React.createElement('td', { style:{ padding:"6px 10px", fontSize:12, textAlign:"right", color: item.investment>0?"#4f46e5":"#bbb" }}, item.investment>0?fmt(item.investment)+"억":"–"),
+                              React.createElement('td', { style:{ padding:"6px 10px", fontSize:12, textAlign:"right", color: totalRecItem>0?"#0ea5e9":"#bbb" }}, totalRecItem>0?fmt(totalRecItem)+"억":"–"),
+                              React.createElement('td', { style:{ padding:"6px 10px", fontSize:12, textAlign:"right", color: item.recovery>0?"#0ea5e9":"#bbb" }}, item.recovery>0?fmt(item.recovery)+"억":"–"),
+                              React.createElement('td', { style:{ padding:"6px 10px", fontSize:12, textAlign:"right", color: item.profit>0?"#10b981":"#bbb" }}, item.profit>0?fmt(item.profit)+"억":"–"),
+                              React.createElement('td', { style:{ padding:"6px 10px", fontSize:12, textAlign:"right", fontWeight:700,
+                                color: (item.investment===0&&totalRecItem===0)?"#aaa":netItem>=0?"#10b981":"#ef4444" }},
+                                (item.investment===0&&totalRecItem===0)?"–":(netItem>=0?"+":"")+fmt(netItem)+"억")
+                            ));
+                          });
+                        }
                       });
                     }
                   });
@@ -1100,124 +1168,6 @@ function InvestmentDashboard() {
                 })()
               )
             )
-
-            /* ── 항목상세 ── */
-            , (() => {
-              const now = new Date();
-              const curY = now.getFullYear();
-              const curQ = Math.ceil((now.getMonth()+1)/3);
-
-              const getLatestQKey = () => {
-                let y = curY, q = curQ;
-                for (let i = 0; i < 8; i++) {
-                  const key = `${y}Q${q}`;
-                  if (SEED_QUARTERLY_PROJECTS[key] && SEED_QUARTERLY_PROJECTS[key].length > 0) return key;
-                  q--; if (q < 1) { q = 4; y--; }
-                }
-                return null;
-              };
-
-              let displayQKey;
-              if (selectedQuarterRange === "all" || selectedQuarterRange === "recent") {
-                displayQKey = getLatestQKey();
-              } else {
-                for (let q = 4; q >= 1; q--) {
-                  const key = `${selectedQuarterRange}Q${q}`;
-                  if (SEED_QUARTERLY_PROJECTS[key] && SEED_QUARTERLY_PROJECTS[key].length > 0) {
-                    displayQKey = key; break;
-                  }
-                }
-              }
-
-              const items = displayQKey ? (SEED_QUARTERLY_PROJECTS[displayQKey] || []) : [];
-              const isCurrent = displayQKey === `${curY}Q${curQ}`;
-              const sorted = [...items].sort((a,b) => {
-                const ra = a.recovery > 0 ? 1 : 0;
-                const rb = b.recovery > 0 ? 1 : 0;
-                if (ra !== rb) return rb - ra;
-                return b.investment - a.investment;
-              });
-
-              const thStyle = { padding:"12px 16px", textAlign:"center", fontWeight:700, fontSize:13,
-                color:"#fff", background:"#b0bcd4", borderRight:"1px solid #c8d0df", whiteSpace:"nowrap" };
-              const tdStyle = (align) => ({ padding:"11px 14px", textAlign: align||"center",
-                fontSize:13, borderBottom:"1px solid #e8ecf0", borderRight:"1px solid #e8ecf0", color:"#374151" });
-
-              return React.createElement('div', { style: { background:"#fff", borderRadius:12, padding:20, boxShadow:"0 2px 12px rgba(0,0,0,0.07)", marginTop:16 },}
-                , React.createElement('div', { style: { display:"flex", alignItems:"center", gap:10, marginBottom:16 },}
-                  , React.createElement('h3', { style: { margin:0, fontSize:15, fontWeight:700, color:"#1a1a2e" },}, "당기내역")
-                  , displayQKey && React.createElement('span', { style: { fontSize:12, fontWeight:700, padding:"3px 10px", borderRadius:6,
-                    background: isCurrent?"#ede9fe":"#f1f5f9", color: isCurrent?"#4f46e5":"#64748b" },}, displayQKey)
-                  , React.createElement('span', { style: { fontSize:11, color:"#aaa" },}, items.length + "건")
-                )
-                , items.length === 0
-                  ? React.createElement('div', { style: { display:"flex", alignItems:"center", justifyContent:"center", height:80,
-                      color:"#cbd5e1", fontSize:13, borderRadius:8, border:"1.5px dashed #e2e8f0", background:"#f8f9fb" },}, "해당 분기 변동 내역이 없습니다")
-                  : React.createElement('div', { style: { overflowX:"auto" },}
-                      , React.createElement('table', { style: { width:"100%", borderCollapse:"collapse", fontSize:13, border:"1px solid #e8ecf0" },}
-                          , React.createElement('thead', null
-                            , React.createElement('tr', null
-                              , React.createElement('th', { style: { ...thStyle, textAlign:"left", width:"22%" }}, "항목")
-                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "투자액")
-                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "회수액")
-                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "원금")
-                              , React.createElement('th', { style: { ...thStyle, width:"8%" }}, "수익")
-                              , React.createElement('th', { style: { ...thStyle, borderRight:"none", width:"46%" }}, "상세")
-                            )
-                          )
-                          , React.createElement('tbody', null
-                            , sorted.map((item, idx) => {
-                              const hasInv = item.investment > 0;
-                              const hasRec = item.recovery > 0;
-                              const hasPro = item.profit > 0;
-                              const totalRec = item.recovery + item.profit;
-                              const bg = idx % 2 === 0 ? "#fff" : "#f9fafc";
-                              return React.createElement('tr', { key: idx, style: { background: bg },}
-                                , React.createElement('td', { style: { ...tdStyle("left"), fontWeight:600, color:"#1a1a2e" }}, item.name)
-                                , React.createElement('td', { style: { ...tdStyle(), color: hasInv?"#4f46e5":"#bbb" }}, hasInv ? item.investment+"억" : "–")
-                                , React.createElement('td', { style: { ...tdStyle(), color: (hasRec||hasPro)?"#0ea5e9":"#bbb" }}, (hasRec||hasPro) ? fmt(totalRec)+"억" : "–")
-                                , React.createElement('td', { style: { ...tdStyle(), color: hasRec?"#0ea5e9":"#bbb" }}, hasRec ? item.recovery+"억" : "–")
-                                , React.createElement('td', { style: { ...tdStyle(), color: hasPro?"#10b981":"#bbb" }}, hasPro ? item.profit+"억" : "–")
-                                , React.createElement('td', { style: { padding:"6px 8px", borderBottom:"1px solid #e8ecf0" },}
-                                  , React.createElement('input', { type:"text", placeholder:"",
-                                    style: { width:"100%", border:"none", background:"transparent", fontSize:13,
-                                      color:"#374151", outline:"none", padding:"4px 6px", fontFamily:"inherit" }
-                                  })
-                                )
-                              );
-                            })
-                            , Array.from({ length: Math.max(0, 5 - sorted.length) }).map((_, idx) =>
-                              React.createElement('tr', { key: "empty"+idx, style: { background: (sorted.length+idx)%2===0?"#fff":"#f9fafc" },}
-                                , React.createElement('td', { style: tdStyle("left") }, "")
-                                , React.createElement('td', { style: tdStyle() }, "")
-                                , React.createElement('td', { style: tdStyle() }, "")
-                                , React.createElement('td', { style: tdStyle() }, "")
-                                , React.createElement('td', { style: tdStyle() }, "")
-                                , React.createElement('td', { style: { padding:"6px 8px", borderBottom:"1px solid #e8ecf0" } }, "")
-                              )
-                            )
-                            , (() => {
-                              const totalInv = sorted.reduce((s,r) => s + r.investment, 0);
-                              const totalRec = sorted.reduce((s,r) => s + r.recovery + r.profit, 0);
-                              const totalPrincipal = sorted.reduce((s,r) => s + r.recovery, 0);
-                              const totalProfit = sorted.reduce((s,r) => s + r.profit, 0);
-                              const sumStyle = { padding:"12px 14px", textAlign:"center", fontWeight:800,
-                                fontSize:13, borderTop:"2px solid #b0bcd4", borderRight:"1px solid #e8ecf0",
-                                background:"#f1f4f8", color:"#1a1a2e" };
-                              return React.createElement('tr', null
-                                , React.createElement('td', { style: { ...sumStyle, textAlign:"left" }}, "합계")
-                                , React.createElement('td', { style: { ...sumStyle, color: totalInv>0?"#4f46e5":"#bbb" }}, totalInv>0 ? fmt(totalInv)+"억" : "–")
-                                , React.createElement('td', { style: { ...sumStyle, color: totalRec>0?"#0ea5e9":"#bbb" }}, totalRec>0 ? fmt(totalRec)+"억" : "–")
-                                , React.createElement('td', { style: { ...sumStyle, color: totalPrincipal>0?"#0ea5e9":"#bbb" }}, totalPrincipal>0 ? fmt(totalPrincipal)+"억" : "–")
-                                , React.createElement('td', { style: { ...sumStyle, color: totalProfit>0?"#10b981":"#bbb" }}, totalProfit>0 ? fmt(totalProfit)+"억" : "–")
-                                , React.createElement('td', { style: { ...sumStyle, borderRight:"none" }}, "")
-                              );
-                            })()
-                          )
-                        )
-                    )
-              );
-            })()
           )
         )
 
