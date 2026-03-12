@@ -619,14 +619,19 @@ function InvestmentDashboard() {
 
               , React.createElement('input', { type: "file", accept: ".xlsx,.xls", style: { display:"none" }, onChange: handleExcelUpload,} )
             )
-            , React.createElement('button', { onClick: () => {
-                const html = document.documentElement.outerHTML;
-                const blob = new Blob([html], { type:"text/html" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = "index.html";
-                a.click();
-                URL.revokeObjectURL(a.href);
+            , React.createElement('button', { onClick: async () => {
+                try {
+                  const res = await fetch(location.href);
+                  const text = await res.text();
+                  const blob = new Blob([text], { type:"text/html" });
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = "index.html";
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                } catch(e) {
+                  alert("로컬 파일에서는 저장이 불가합니다. GitHub Pages에서 사용해주세요.");
+                }
               },
               style: { background:"rgba(99,102,241,0.25)", border:"1px solid rgba(99,102,241,0.5)",
                 color:"#a5b4fc", padding:"8px 16px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:600 },}, "💾 저장"
@@ -1250,14 +1255,7 @@ function InvestmentDashboard() {
                     (p.target||"").toLowerCase().includes(q))
                 : filteredProjects;
 
-              // 검색 결과 1건이면 자동 펼침 (스크롤만, setState는 onChange에서 처리)
-              const autoExpandId = (q && searchFiltered.length === 1) ? searchFiltered[0].id : null;
-              if (autoExpandId && expandedItem !== autoExpandId) {
-                setTimeout(() => {
-                  const el = document.getElementById("portfolio-card-"+autoExpandId);
-                  if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
-                }, 100);
-              }
+              // 검색 결과 1건이면 자동 펼침은 onChange에서 처리됨
 
               const sortedItems = [...searchFiltered].sort((a,b) => {
                 const damA = (a.note||"").includes("손상차손")?1:0;
