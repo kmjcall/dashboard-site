@@ -669,27 +669,29 @@ function InvestmentDashboard() {
             )
           )
           , activeTab === "projects" && (
-            React.createElement('div', { style: { display:"flex", alignItems:"center", gap:6 },}
-              , React.createElement('span', { style: { fontSize:13, color:"#111", fontWeight:800, minWidth:48 },}, "정렬:")
-              , [{id:"invested",label:"투자액순"},{id:"recovered",label:"회수액순"},{id:"returnRate",label:"수익률순"},{id:"investYear",label:"투자시기순"}].map(s => (
-                React.createElement('button', { key: s.id, onClick: () => { setSortOrder(s.id); setIssueFilter(false); },
-                  style: { padding:"6px 12px", borderRadius:6, cursor:"pointer", fontSize:12, fontWeight:600,
-                    background: sortOrder===s.id ? "#4f46e5" : "#fff",
-                    color: sortOrder===s.id ? "#fff" : "#555",
-                    border: sortOrder===s.id ? "2px solid #4f46e5" : "2px solid #d1d5db" },}
-                  , s.label)
-              ))
-              , React.createElement('div', { style: { width:1, height:20, background:"#d1d5db", marginLeft:4 },} )
-              , React.createElement('button', { onClick: () => setIssueFilter(!issueFilter),
-                style: { padding:"6px 14px", borderRadius:6,
-                  border: "2px solid #ef4444",
-                  cursor:"pointer", fontSize:12,
-                  background: issueFilter ? "#ef4444" : "#fff5f5",
-                  color: issueFilter ? "#fff" : "#ef4444",
-                  fontWeight:700,
-                  boxShadow: issueFilter ? "0 0 0 3px rgba(239,68,68,0.2)" : "none" },}
-                , issueFilter ? "✅ 이슈항목만 보기 중" : "⚠️ 이슈항목만")
-              , React.createElement('div', { style: { position:"relative", marginLeft:8 },}
+            React.createElement('div', { style: { display:"flex", alignItems:"center", gap:6, justifyContent:"space-between" },}
+              , React.createElement('div', { style: { display:"flex", alignItems:"center", gap:6 },}
+                , React.createElement('span', { style: { fontSize:13, color:"#111", fontWeight:800, minWidth:48 },}, "정렬:")
+                , [{id:"invested",label:"투자액순"},{id:"recovered",label:"회수액순"},{id:"returnRate",label:"수익률순"},{id:"investYear",label:"투자시기순"}].map(s => (
+                  React.createElement('button', { key: s.id, onClick: () => { setSortOrder(s.id); setIssueFilter(false); },
+                    style: { padding:"6px 12px", borderRadius:6, cursor:"pointer", fontSize:12, fontWeight:600,
+                      background: sortOrder===s.id ? "#4f46e5" : "#fff",
+                      color: sortOrder===s.id ? "#fff" : "#555",
+                      border: sortOrder===s.id ? "2px solid #4f46e5" : "2px solid #d1d5db" },}
+                    , s.label)
+                ))
+                , React.createElement('div', { style: { width:1, height:20, background:"#d1d5db", marginLeft:4 },} )
+                , React.createElement('button', { onClick: () => setIssueFilter(!issueFilter),
+                  style: { padding:"6px 14px", borderRadius:6,
+                    border: "2px solid #ef4444",
+                    cursor:"pointer", fontSize:12,
+                    background: issueFilter ? "#ef4444" : "#fff5f5",
+                    color: issueFilter ? "#fff" : "#ef4444",
+                    fontWeight:700,
+                    boxShadow: issueFilter ? "0 0 0 3px rgba(239,68,68,0.2)" : "none" },}
+                  , issueFilter ? "✅ 이슈항목만 보기 중" : "⚠️ 이슈항목만")
+              )
+              , React.createElement('div', { style: { position:"relative" },}
                 , React.createElement('span', { style: { position:"absolute", left:8, top:"50%", transform:"translateY(-50%)", fontSize:12, pointerEvents:"none" }}, "🔍")
                 , React.createElement('input', {
                     type:"text",
