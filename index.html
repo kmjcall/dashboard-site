@@ -938,24 +938,24 @@ function InvestmentDashboard() {
               };
 
               const QKPICard = ({ label, value, color, qkey, cur, prev, isRate }) =>
-                React.createElement('div', { style: {
+                React.createElement('div', { className:"kpi-card", style: {
                   background:"#fff", borderRadius:12, padding:"14px 16px",
                   boxShadow:"0 2px 8px rgba(0,0,0,0.07)", borderTop:`3px solid ${color}`,
                   display:"flex", flexDirection:"column", gap:4
                 }},
                   React.createElement('div', { style:{ fontSize:11, color:"#888", fontWeight:600 }}, label),
                   React.createElement('div', { style:{ display:"flex", alignItems:"baseline", gap:4, flexWrap:"wrap" }},
-                    React.createElement('span', { style:{ fontSize:22, fontWeight:800, color:"#1a1a2e" }}, value),
+                    React.createElement('span', { className:"kpi-value", style:{ fontSize:22, fontWeight:800, color:"#1a1a2e" }}, value),
                     React.createElement(Badge, { cur, prev, isRate })
                   ),
-                  React.createElement('div', { style:{ fontSize:12, color:"#666" }},
+                  React.createElement('div', { className:"kpi-sub", style:{ fontSize:12, color:"#666" }},
                     React.createElement('span', { style:{ fontWeight:700, color:"#444", fontSize:13 }},
                       `${isRate ? prevRate.toFixed(1)+"%" : fmt(prev)+"억"}(전분기)`
                     )
                   )
                 );
 
-              return React.createElement('div', { style:{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:16 }},
+              return React.createElement('div', { className:"dash-kpi-grid", style:{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:16 }},
                 React.createElement(QKPICard, { label:"총투자액", value:fmt(curInv)+"억", color:"#4f46e5", qkey:curQKey, cur:curInv,  prev:prevInv  }),
                 React.createElement(QKPICard, { label:"총회수액", value:fmt(curRec)+"억", color:"#0ea5e9", qkey:curQKey, cur:curRec,  prev:prevRec  }),
                 React.createElement(QKPICard, { label:"총수익",   value:fmt(curPro)+"억", color:"#10b981", qkey:curQKey, cur:curPro,  prev:prevPro  }),
