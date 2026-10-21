@@ -594,7 +594,7 @@ const portVisibleRows = (section, cat, search) => {
     .filter(s => section === "all" || s.key === section)
     .reduce((acc, s) => acc.concat(s.rows.map(r => ({ ...r, _sec: s.key }))), [])
     .filter(r => {
-      if (cat !== "all" && cat !== "year" && r.cat !== cat) return false;
+      if (cat !== "all" && cat !== "year" && cat !== "corp" && r.cat !== cat) return false;
       if (!q) return true;
       return [r.name, r.target, r.mgr, r.corp, r.share].some(v => String(v || "").toLowerCase().includes(q));
     });
@@ -627,15 +627,24 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
     setTimeout(updateEdge, 400);
   };
   const q = (search || "").trim().toLowerCase();
-  const byYear = cat === "year";
+  const byYear = cat === "year", byCorp = cat === "corp";
   const matches = r => {
-    if (!byYear && cat !== "all" && r.cat !== cat) return false;
+    if (!byYear && !byCorp && cat !== "all" && r.cat !== cat) return false;
     if (!q) return true;
     return [r.name, r.target, r.mgr, r.corp, r.share].some(v => String(v || "").toLowerCase().includes(q));
   };
   const filtering = !!q || cat !== "all";
   let sections;
-  if (byYear) {
+  if (byCorp) {
+    // 투자법인별: 건수 많은 법인 순(같으면 가나다), 법인 칸이 비어 있으면 '미상'
+    const pool = SEED_PORTFOLIO.sections
+      .filter(s => section === "all" || s.key === section)
+      .reduce((acc, s) => acc.concat(s.rows.filter(matches).map(r => ({ ...r, _sec: s.key }))), []);
+    const cKey = r => String(r.corp || "").trim() || "미상";
+    const cnt = {}; pool.forEach(r => { cnt[cKey(r)] = (cnt[cKey(r)] || 0) + 1; });
+    const corps = Object.keys(cnt).sort((a, b) => (cnt[b] - cnt[a]) || a.localeCompare(b, "ko"));
+    sections = corps.map(c => ({ key: "c" + c, label: c, rows: pool.filter(r => cKey(r) === c), isYear: true }));
+  } else if (byYear) {
     const pool = SEED_PORTFOLIO.sections
       .filter(s => section === "all" || s.key === section)
       .reduce((acc, s) => acc.concat(s.rows.filter(matches).map(r => ({ ...r, _sec: s.key }))), []);
@@ -1253,7 +1262,7 @@ function InvestmentDashboard() {
           const prin = rows.reduce((a, r) => a + (Number(r.prin) || 0), 0);
           const rate = inv > 0 ? rec / inv * 100 : 0;
           const filtLabel = [portSection === "all" ? "전체" : ({active:"투자목록", closed:"청산목록", impaired:"손상목록"})[portSection],
-            portCat !== "all" && portCat !== "year" ? portCat : null, portSearch ? "검색: " + portSearch : null].filter(Boolean).join(" · ");
+            portCat !== "all" && portCat !== "year" && portCat !== "corp" ? portCat : null, portSearch ? "검색: " + portSearch : null].filter(Boolean).join(" · ");
           // 뒷면용 분해: 구분별 건수·투자액, 회수 구성비, 원금/배당 회수율
           const secSum = (k) => rows.filter(r => r._sec === k).reduce((a, r) => ({ n: a.n + 1, inv: a.inv + Math.abs(Number(r.invested) || 0) }), { n: 0, inv: 0 });
           const sA = secSum("active"), sC = secSum("closed"), sI = secSum("impaired");
@@ -1306,18 +1315,18 @@ function InvestmentDashboard() {
               , React.createElement('span', { style: { fontSize:14, color:"#111", fontWeight:800, marginLeft:10, whiteSpace:"nowrap" },}, "대분류")
               , React.createElement('div', { className: "port-chip-group", style: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap",
                   background:"#d6e4f5", border:"1px solid #a9c3e3", padding:"5px 10px", borderRadius:8 },}
-                , [["all","전체"], ["year","연도별"], ...PORT_CATS.map(c => [c, c])].map(([v,l]) => (
+                , [["all","전체"], ["year","연도별"], ["corp","법인별"], ...PORT_CATS.map(c => [c, c])].map(([v,l]) => (
                   React.createElement('button', { key: v, onClick: () => { setPortCat(v); setPortYear("all"); },
-                    style: v === "year"
+                    style: (v === "year" || v === "corp")
                       ? { ...chipStyle(portCat===v), border:"2px solid #ef4444", fontWeight:700,
                           color: portCat===v ? "#fff" : "#dc2626", background: portCat===v ? "#dc2626" : "#fff5f5" }
                       : chipStyle(portCat===v),}, l)
                 ))
               )
               , React.createElement('input', { className: "port-search", value: portSearch, onChange: e => setPortSearch(e.target.value),
-                placeholder: "🔍 사업명·투자대상·운용사 검색",
+                placeholder: "🔍 사업명·대상·운용사",
                 style: { marginLeft:"auto", padding:"7px 12px", borderRadius:8, border:"2px solid #00529b", fontSize:13, fontWeight:600,
-                  outline:"none", flex:"0 1 260px", minWidth:170, width:260, background:"#eaf2fb", color:"#1a1a2e",
+                  outline:"none", flex:"0 1 200px", minWidth:130, width:200, background:"#eaf2fb", color:"#1a1a2e",
                   boxShadow:"0 0 0 3px rgba(0,82,155,0.15)" },} )
             )
           )
