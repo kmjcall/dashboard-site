@@ -574,7 +574,7 @@ const portFmt = {
   pct1: v => (v == null || isNaN(v)) ? "" : (v * 100).toFixed(1) + "%",
 };
 const portCellColor = (c, v) => {
-  if (c.yr) return c.j === 0 ? "#1f2937" : (v > 0 ? (c.j === 1 ? "#0369a1" : "#047857") : "#1f2937");
+  if (c.yr) return c.j === 0 ? "#dc2626" : (v > 0 ? (c.j === 1 ? "#0369a1" : "#047857") : "#1f2937");
   if (c.k === "rate") {
     if (v == null || isNaN(v)) return "#94a3b8";
     if (v >= 1) return "#059669";
@@ -659,7 +659,7 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
     left: c.left != null ? c.left : undefined, zIndex: c.left != null ? 5 : 3 });
   const tdStyle = (c, bg, extra) => ({ padding:"7px 8px", fontSize:12.5, textAlign: c.a || "right",
     borderBottom:"1px solid #edf0f4", borderRight:"1px solid #f1f4f8", whiteSpace:"nowrap", background:bg,
-    ...(c.yr && c.j === 0 ? { borderLeft:"2px solid " + (c.yi % 2 ? "#cbd5e1" : "#94a3b8") } : {}),
+    ...(c.yr && c.j === 0 ? { borderLeft:"2px solid " + (c.yi % 2 ? "#eef1f5" : "#e2e8f0") } : {}),
     width:c.w, minWidth:c.w, maxWidth:c.w, overflow:"hidden", textOverflow:"ellipsis",
     fontVariantNumeric:"tabular-nums",
     ...(c.left != null ? { position:"sticky", left:c.left, zIndex:2 } : {}),
@@ -712,7 +712,7 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
         const v = t[c.k];
         const txt = v == null ? "" : (portFmt[c.f || "text"])(v);
         return React.createElement('td', { key: c.k,
-          style: tdStyle(c, "#f1f4f8", { fontWeight:800, color: c.k === "rate" ? portCellColor(c, v) : "#1a1a2e",
+          style: tdStyle(c, "#f1f4f8", { fontWeight:800, color: c.k === "rate" ? portCellColor(c, v) : (c.yr && c.j === 0 ? "#dc2626" : "#1a1a2e"),
             borderTop:"2px solid #b0bcd4", borderBottom:"2px solid #b0bcd4" }) }, txt);
       })
     );
