@@ -80,6 +80,78 @@ const KPICard = ({ label, value, sub, color, onClick, hint, corner, back, flippe
   );
 };
 
+/* 자료받기: 대시보드 현재 데이터(클로드가 반영한 변경 포함)를 엑셀 프로젝트목록 형식으로 내려받기.
+   이슈는 해당 포트폴리오 '사업명' 셀의 메모(코멘트)로 넣음 — 이 브라우저에서 입력한 이슈가 있으면 그것을 우선 */
+function exportPortfolioXlsx() {
+  if (typeof XLSX === "undefined") { alert("엑셀 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요."); return; }
+  const YEARS = []; for (let y = 2016; y <= 2026; y++) YEARS.push(String(y));
+  const COLS = [
+    ["번호","no"],["사업명","name"],["투자대상","target"],["전략자산","strategic"],["투자시기","year"],["대분류","cat"],["운용사","mgr"],
+    ["지분유형","share"],["투자법인","corp"],["MOIC","moic"],["투자벨류","val0"],["현재벨류","val1"],["Multiple","mult"],
+    ["최초지분","stake0"],["현재지분","stake1"],["약정총액","commit"],["누적투자액","invested"],["잔여약정액","remain"],
+    ["총회수","rec"],["원금","prin"],["배당","div"],["미회수잔액","unrec"],["회수율","rate"]];
+  const SUMK = ["commit","invested","remain","rec","prin","div","unrec"];
+  const nBase = COLS.length, nCols = nBase + YEARS.length * 3;
+  const enc = (r, c) => XLSX.utils.encode_cell({ r, c });
+  const ws = {}; const merges = []; let R = 0;
+  const put = (r, c, v, z, f) => { if (v === null || v === undefined || v === "") { if (!f) return; }
+    const cell = f ? { t:"n", f, v: (typeof v === "number" ? v : 0) } : (typeof v === "number" ? { t:"n", v } : { t:"s", v: String(v) });
+    if (z) cell.z = z; ws[enc(r, c)] = cell; };
+  const NUM = '#,##0.0;(#,##0.0);""', DEC = '0.00;-0.00;""', PCT = '0.0%;-0.0%';
+  const fmtOf = k => k === "rate" ? PCT : (k === "moic" || k === "mult") ? DEC : (["val0","val1"].includes(k) ? '#,##0;(#,##0);""' : (SUMK.includes(k) ? NUM : null));
+  const now = new Date(), pad = n => String(n).padStart(2, "0");
+  const stamp = now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate());
+  put(R, 0, "투자사업팀 포트폴리오 현황 (대시보드 반영본)"); merges.push({ s:{r:R,c:0}, e:{r:R,c:8} }); R++;
+  put(R, 0, "원본 기준일 " + SEED_PORTFOLIO.asof + " · 내려받은 시각 " + now.getFullYear() + "." + pad(now.getMonth()+1) + "." + pad(now.getDate()) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()) + " · 단위: 억원 · 이슈는 사업명 셀 메모로 표시");
+  merges.push({ s:{r:R,c:0}, e:{r:R,c:12} }); R += 2;
+  // 머리글 2줄 (연도 묶음)
+  COLS.forEach(([h], c) => { put(R, c, h); put(R+1, c, ""); merges.push({ s:{r:R,c}, e:{r:R+1,c} }); });
+  YEARS.forEach((y, i) => { const c0 = nBase + i*3; put(R, c0, y + "년"); merges.push({ s:{r:R,c:c0}, e:{r:R,c:c0+2} });
+    ["출자","원금","배당"].forEach((h, j) => put(R+1, c0+j, h)); });
+  R += 2;
+  const memo = (r) => { let t = ""; try { t = localStorage.getItem("inv_issue_" + r._sec + "_" + r.no) || ""; } catch (e) {} return t || r.issue || ""; };
+  let nMemo = 0;
+  SEED_PORTFOLIO.sections.forEach(sec => {
+    put(R, 0, sec.label + " (" + sec.rows.length + "건)"); merges.push({ s:{r:R,c:0}, e:{r:R,c:8} }); R++;
+    const first = R;
+    sec.rows.forEach(row => {
+      const r = { ...row, _sec: sec.key };
+      COLS.forEach(([h, k], c) => {
+        let v = r[k];
+        if (k === "strategic") v = r.strategic ? "O" : "";
+        if ((k === "moic" || k === "mult") && Number(v) === 0) v = null;
+        put(R, c, v, fmtOf(k));
+      });
+      YEARS.forEach((y, i) => { const t = (r.yr || {})[y]; if (!t) return; t.forEach((v, j) => { if (v) put(R, nBase + i*3 + j, v, NUM); }); });
+      const text = memo(r);
+      if (text) { const a = enc(R, 1); if (!ws[a]) ws[a] = { t:"s", v:"" };
+        ws[a].c = [{ a: "투자사업팀", t: text }]; ws[a].c.hidden = true; nMemo++; }
+      R++;
+    });
+    const last = R - 1;
+    put(R, 1, "합계");
+    const colL = c => XLSX.utils.encode_col(c);
+    COLS.forEach(([h, k], c) => { if (!SUMK.includes(k)) return;
+      const v = sec.rows.reduce((a, x) => a + (Number(x[k]) || 0), 0);
+      put(R, c, v, NUM, "SUM(" + colL(c) + (first+1) + ":" + colL(c) + (last+1) + ")"); });
+    const ci = COLS.findIndex(c => c[1] === "invested"), cr = COLS.findIndex(c => c[1] === "rec"), cRate = COLS.findIndex(c => c[1] === "rate");
+    const sInv = Math.abs(sec.rows.reduce((a, x) => a + (Number(x.invested) || 0), 0)), sRec = sec.rows.reduce((a, x) => a + (Number(x.rec) || 0), 0);
+    put(R, cRate, sInv ? sRec / sInv : 0, PCT, "IFERROR(" + colL(cr) + (R+1) + "/ABS(" + colL(ci) + (R+1) + "),0)");
+    YEARS.forEach((y, i) => [0,1,2].forEach(j => { const c = nBase + i*3 + j;
+      const v = sec.rows.reduce((a, x) => a + (Number(((x.yr || {})[y] || [])[j]) || 0), 0);
+      put(R, c, v, NUM, "SUM(" + colL(c) + (first+1) + ":" + colL(c) + (last+1) + ")"); }));
+    R += 2;
+  });
+  ws["!ref"] = XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:R,c:nCols-1} });
+  ws["!merges"] = merges;
+  const W = { no:5, name:30, target:22, strategic:7, year:7, cat:10, mgr:20, share:12, corp:12, stake0:14, stake1:14 };
+  ws["!cols"] = COLS.map(([h, k]) => ({ wch: W[k] || 10 })).concat(YEARS.flatMap(() => [{wch:8},{wch:8},{wch:8}]));
+  ws["!freeze"] = { xSplit: 2, ySplit: 6 };
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "프로젝트목록");
+  XLSX.writeFile(wb, "투자사업팀포트폴리오현황_" + stamp + "_대시보드.xlsx");
+  return nMemo;
+}
+
 /* 자동 순차 플립: 1번 뒤집힘 → 원위치 → 2번 뒤집힘 → 원위치 → 3번 … 반복(카드당 3초). 마우스를 카드 줄에 올리면 멈춤 */
 function useKpiSeqFlip(n) {
   const [idx, setIdx] = useState(-1);
@@ -1108,11 +1180,10 @@ function InvestmentDashboard() {
             , React.createElement('h1', { className: "dash-title", style: { margin:0, fontSize:20, fontWeight:900 },}, "투자자산 현황" )
           )
           , React.createElement('div', { className: "dash-header-buttons", style: { display:"flex", gap:8 },}
-            , React.createElement('label', { style: { background:"rgba(255,255,255,0.14)", border:"1px solid rgba(255,255,255,0.35)",
-                color:"#fff", padding:"5px 12px", borderRadius:7, cursor:"pointer", fontSize:12, fontWeight:600 },}, "📂 자료추가"
-
-              , React.createElement('input', { type: "file", accept: ".xlsx,.xls", style: { display:"none" }, onChange: handleExcelUpload,} )
-            )
+            , React.createElement('button', { onClick: () => exportPortfolioXlsx(), title: "현재 데이터를 엑셀로 내려받기 (이슈는 사업명 셀 메모로 포함)",
+              style: { background:"rgba(255,255,255,0.14)", border:"1px solid rgba(255,255,255,0.35)",
+                color:"#fff", padding:"5px 12px", borderRadius:7, cursor:"pointer", fontSize:12, fontWeight:600 },}, "📥 자료받기"
+               )
             , React.createElement('button', { onClick: () => setShowSettings(true),
               style: { background:"rgba(255,255,255,0.14)", border:"1px solid rgba(255,255,255,0.35)",
                 color:"#fff", padding:"5px 12px", borderRadius:7, cursor:"pointer", fontSize:12, fontWeight:600 },}, "⚙️ 설정"
