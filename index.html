@@ -735,8 +735,9 @@ function AnnualModal({ rows, title, onClose }) {
 
 // ── 회수 내역 팝업 (누적회수액 카드 클릭) ─────────────────────────────────────
 function RecoveryModal({ rows, title, onClose }) {
-  const list = rows.filter(r => (Number(r.prin) || 0) > 0 || (Number(r.div) || 0) > 0)
-    .map(r => ({ ...r, _inv: Math.abs(Number(r.invested) || 0), _rec: (Number(r.prin) || 0) + (Number(r.div) || 0) }))
+  // 회수액(원금+배당)이 억원 소수 1자리로 0.0이 되는 항목(예: 수십만원 회수)은 목록에서 제외
+  const list = rows.map(r => ({ ...r, _inv: Math.abs(Number(r.invested) || 0), _rec: (Number(r.prin) || 0) + (Number(r.div) || 0) }))
+    .filter(r => r._rec >= 0.05)
     .map(r => ({ ...r, _moic: r.moic != null && !isNaN(r.moic) ? Number(r.moic) : (r._inv > 0 ? r._rec / r._inv : null) }))
     .sort((a, b) => b._rec - a._rec);
   const tot = list.reduce((a, r) => ({ inv: a.inv + r._inv, rec: a.rec + r._rec, prin: a.prin + (Number(r.prin) || 0), div: a.div + (Number(r.div) || 0) }), { inv:0, rec:0, prin:0, div:0 });
