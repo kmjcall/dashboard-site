@@ -9,6 +9,7 @@
   <script src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
   <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }</style>
 </head>
@@ -110,7 +111,7 @@ function exportPortfolioXlsx() {
     ["출자","원금","배당"].forEach((h, j) => put(R+1, c0+j, h)); });
   R += 2;
   const memo = (r) => { let t = ""; try { t = localStorage.getItem("inv_issue_" + r._sec + "_" + r.no) || ""; } catch (e) {} return t || r.issue || ""; };
-  let nMemo = 0;
+  let nMemo = 0; const memoAt = {};
   SEED_PORTFOLIO.sections.forEach(sec => {
     put(R, 0, sec.label + " (" + sec.rows.length + "건)"); merges.push({ s:{r:R,c:0}, e:{r:R,c:8} }); R++;
     const first = R;
@@ -125,7 +126,7 @@ function exportPortfolioXlsx() {
       YEARS.forEach((y, i) => { const t = (r.yr || {})[y]; if (!t) return; t.forEach((v, j) => { if (v) put(R, nBase + i*3 + j, v, NUM); }); });
       const text = memo(r);
       if (text) { const a = enc(R, 1); if (!ws[a]) ws[a] = { t:"s", v:"" };
-        ws[a].c = [{ a: "투자사업팀", t: text }]; ws[a].c.hidden = true; nMemo++; }
+        ws[a].c = [{ a: "투자사업팀", t: text }]; ws[a].c.hidden = true; memoAt[R] = text; nMemo++; }
       R++;
     });
     const last = R - 1;
@@ -148,7 +149,39 @@ function exportPortfolioXlsx() {
   ws["!cols"] = COLS.map(([h, k]) => ({ wch: W[k] || 10 })).concat(YEARS.flatMap(() => [{wch:8},{wch:8},{wch:8}]));
   ws["!freeze"] = { xSplit: 2, ySplit: 6 };
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "프로젝트목록");
-  XLSX.writeFile(wb, "투자사업팀포트폴리오현황_" + stamp + "_대시보드.xlsx");
+  const fname = "투자사업팀포트폴리오현황_" + stamp + "_대시보드.xlsx";
+  if (typeof JSZip === "undefined" || !nMemo) { XLSX.writeFile(wb, fname); return nMemo; }
+  // 메모 상자 크기를 내용에 맞게 키움: 폭 고정(약 C~H열), 높이는 줄 수(줄바꿈 포함)에 비례
+  const vw = str => { let w = 0; for (const ch of str) w += ch.charCodeAt(0) > 0x2E7F ? 2 : 1; return w; };
+  const CAP = 74, COL_FROM = 2, COL_TO = 8, WIDTH_PT = 420;
+  const rowsFor = t => { const lines = String(t).split(/\r?\n/).reduce((n, ln) => n + Math.max(1, Math.ceil(vw(ln) / CAP)), 0);
+    return Math.max(4, Math.ceil(lines * 17 / 20) + 2); };
+  const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  const download = (blob) => { const url = URL.createObjectURL(blob); const a = document.createElement("a");
+    a.href = url; a.download = fname; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1500); };
+  JSZip.loadAsync(out).then(zip => {
+    const jobs = [];
+    zip.forEach((path, f) => {
+      if (/^xl\/drawings\/vmlDrawing\d+\.vml$/.test(path)) jobs.push(f.async("string").then(x => {
+        x = x.replace(/<v:shape [\s\S]*?<\/v:shape>/g, sh => {
+          const m = sh.match(/<x:Row>(\d+)<\/x:Row>/); if (!m) return sh;
+          const r = Number(m[1]), n = rowsFor(memoAt[r] || "");
+          return sh
+            .replace(/width:[\d.]+pt;height:[\d.]+pt/, "width:" + WIDTH_PT + "pt;height:" + (n * 15) + "pt")
+            .replace(/fillcolor="[^"]*"/, 'fillcolor="#FFFFE1"').replace(/strokecolor="[^"]*"/, 'strokecolor="#8a8a8a"')
+            .replace(/<v:fill [\s\S]*?<\/v:fill>/, '<v:fill color2="#FFFFE1"/>')
+            .replace(/<x:Anchor>[^<]*<\/x:Anchor>/, "<x:Anchor>" + COL_FROM + ",15," + Math.max(0, r - 1) + ",4," + COL_TO + ",0," + (Math.max(0, r - 1) + n) + ",4</x:Anchor>")
+            .replace("<x:SizeWithCells/>", "");
+        });
+        zip.file(path, x);
+      }));
+      // 메모 글꼴: 맑은 고딕 10pt
+      if (/^xl\/comments\d*\.xml$/.test(path)) jobs.push(f.async("string").then(x => {
+        zip.file(path, x.replace(/<text><t([^>]*)>/g, '<text><r><rPr><sz val="10"/><rFont val="맑은 고딕"/><family val="3"/></rPr><t$1>').replace(/<\/t><\/text>/g, "</t></r></text>"));
+      }));
+    });
+    return Promise.all(jobs).then(() => zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+  }).then(download).catch(() => XLSX.writeFile(wb, fname));
   return nMemo;
 }
 
