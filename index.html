@@ -640,7 +640,9 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
     const pool = SEED_PORTFOLIO.sections
       .filter(s => section === "all" || s.key === section)
       .reduce((acc, s) => acc.concat(s.rows.filter(matches).map(r => ({ ...r, _sec: s.key }))), []);
-    const cKey = r => String(r.corp || "").trim() || "미상";
+    // 사명 변경 건은 같은 회사로 묶음(표의 투자법인 칸 값은 엑셀 그대로 둠)
+    const CORP_SAME = { "우미산업개발(선우산업)": "우미산업개발" };
+    const cKey = r => { const c = String(r.corp || "").trim(); return c ? (CORP_SAME[c] || c) : "미상"; };
     const cnt = {}; pool.forEach(r => { cnt[cKey(r)] = (cnt[cKey(r)] || 0) + 1; });
     const corps = Object.keys(cnt).sort((a, b) => (cnt[b] - cnt[a]) || a.localeCompare(b, "ko"));
     sections = corps.map(c => ({ key: "c" + c, label: c, rows: pool.filter(r => cKey(r) === c), isYear: true }));
