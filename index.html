@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>투자사업팀 대시보드</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -1224,14 +1224,16 @@ function InvestmentDashboard() {
         .kpi-value { font-size: 15px !important; white-space: nowrap !important; }
         .kpi-sub { font-size: 9.5px !important; white-space: normal !important; line-height: 1.25 !important; overflow: visible !important; }
         /* 모바일: 필터는 라벨 위·칩 아래로 세로 배치 */
-        html, body { height: 100%; overflow: hidden !important; overscroll-behavior: none; }
+        html, body { height: 100%; width: 100%; overflow: hidden !important; overscroll-behavior: none; touch-action: pan-x pan-y; }
+        body { position: fixed; top: 0; left: 0; right: 0; bottom: 0; }
+        #root { height: 100%; overflow: hidden; }
         .dash-main { height: 100vh; height: 100dvh; min-height: 0 !important; overflow: hidden !important; }
         .port-filter-row { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: center !important; gap: 4px 6px !important; }
         .port-flabel { margin-left: 0 !important; font-size: 12px !important; }
         .port-chip-group { gap: 5px !important; padding: 3px 6px !important; overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .port-chip-group::-webkit-scrollbar { display: none; }
         .port-chip-group button { flex-shrink: 0 !important; white-space: nowrap !important; padding: 5px 10px !important; }
-        .port-scroll { overscroll-behavior: contain; }
+        .port-scroll { overscroll-behavior: none; touch-action: pan-x pan-y; }
         .port-filter-row .port-search { width: 100% !important; flex: none !important; min-width: 0 !important; margin-top: 0 !important; grid-column: 1 / -1; padding: 5px 10px !important; }
         .dash-kpi-value { font-size: 16px !important; }
         .dash-kpi-sub { font-size: 10px !important; }
