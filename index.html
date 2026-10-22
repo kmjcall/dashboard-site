@@ -819,7 +819,8 @@ const breakdownLabel = (props) => {
 function AnnualModal({ rows, title, onClose }) {
   const data = portAnnualData(rows, false);
   breakdownLabel.data = data;
-  const chartH = Math.max(400, Math.min(640, Math.round((typeof window !== "undefined" ? window.innerHeight : 800) * 0.66)));
+  const mob = typeof window !== "undefined" && window.innerWidth < 640;
+  const chartH = mob ? 340 : Math.max(400, Math.min(640, Math.round((typeof window !== "undefined" ? window.innerHeight : 800) * 0.66)));
   const yearly = data;
   const tot = yearly.reduce((a, d) => ({ 투자: a.투자 + d.투자, 원금: a.원금 + d.원금, 배당: a.배당 + d.배당 }), { 투자:0, 원금:0, 배당:0 });
   const pre = "누적";
@@ -838,21 +839,22 @@ function AnnualModal({ rows, title, onClose }) {
       ),
       React.createElement('div', { style: { padding:"6px 16px 2px" } },
         React.createElement('div', { className: "port-scroll", style: { overflowX:"auto", overflowY:"hidden", WebkitOverflowScrolling:"touch" } },
-          React.createElement('div', { style: { minWidth:960, height:chartH } },
+          React.createElement('div', { style: { minWidth: mob ? 0 : 960, height:chartH } },
             React.createElement(ResponsiveContainer, { width:"100%", height:chartH },
-              React.createElement(BarChart, { data, margin: { top:56, right:16, left:0, bottom:0 }, barCategoryGap:"30%", barGap:2 },
+              React.createElement(BarChart, { data, margin: { top: mob ? 24 : 56, right: mob ? 4 : 16, left:0, bottom:0 }, barCategoryGap: mob ? "18%" : "30%", barGap: mob ? 1 : 2 },
                 React.createElement(CartesianGrid, { strokeDasharray:"3 3", stroke:"#f0f0f0", vertical:false }),
-                React.createElement(XAxis, { dataKey:"year", interval:0, tick: { fontSize:14, fill:"#1a1a2e", fontWeight:700 }, tickLine:false }),
-                React.createElement(YAxis, { tick: { fontSize:11, fill:"#555" }, tickFormatter: v => v + "억", width:64 }),
+                React.createElement(XAxis, { dataKey:"year", interval:0, tick: { fontSize: mob ? 10 : 14, fill:"#1a1a2e", fontWeight:700 }, tickLine:false,
+                  tickFormatter: v => mob ? "'" + String(v).replace(/[^0-9]/g, "").slice(-2) : v }),
+                React.createElement(YAxis, { tick: { fontSize: mob ? 10 : 11, fill:"#555" }, tickFormatter: v => mob ? v : v + "억", width: mob ? 34 : 64 }),
                 React.createElement(Tooltip, { formatter: tip }),
                 React.createElement(Legend, { verticalAlign:"bottom", height:30, iconType:"square", iconSize:12,
                   wrapperStyle: { fontSize:13, fontWeight:700 },
                   formatter: v => React.createElement('span', { style: { color: v === "투자" ? "#4f46e5" : "#0369a1", marginRight:14 } }, v === "투자" ? "누적투자" : "누적회수") }),
-                React.createElement(Bar, { dataKey:"투자", fill:"#4f46e5", barSize:46, radius:[3,3,0,0], isAnimationActive:false },
-                  React.createElement(LabelList, { dataKey:"투자", position:"top", offset:6, fontSize:13, fill:"#4f46e5", fontWeight:800, formatter: v => v > 0 ? Math.round(v) + "억" : "" })),
-                React.createElement(Bar, { dataKey:"회수", fill:"#0ea5e9", barSize:46, radius:[3,3,0,0], isAnimationActive:false },
-                  React.createElement(LabelList, { dataKey:"회수", position:"top", offset:6, fontSize:13, fill:"#0369a1", fontWeight:800, formatter: v => v > 0 ? Math.round(v) + "억" : "" }),
-                  React.createElement(LabelList, { dataKey:"회수", content: breakdownLabel }))
+                React.createElement(Bar, { dataKey:"투자", fill:"#4f46e5", barSize: mob ? 11 : 46, radius:[3,3,0,0], isAnimationActive:false },
+                  React.createElement(LabelList, { dataKey:"투자", position:"top", offset: mob ? 3 : 6, fontSize: mob ? 8 : 13, fill:"#4f46e5", fontWeight:800, formatter: v => v > 0 ? Math.round(v) + (mob ? "" : "억") : "" })),
+                React.createElement(Bar, { dataKey:"회수", fill:"#0ea5e9", barSize: mob ? 11 : 46, radius:[3,3,0,0], isAnimationActive:false },
+                  React.createElement(LabelList, { dataKey:"회수", position:"top", offset: mob ? 3 : 6, fontSize: mob ? 8 : 13, fill:"#0369a1", fontWeight:800, formatter: v => v > 0 ? Math.round(v) + (mob ? "" : "억") : "" }),
+                  !mob && React.createElement(LabelList, { dataKey:"회수", content: breakdownLabel }))
               )
             )
           )
@@ -894,7 +896,7 @@ function RecoveryModal({ rows, title, onClose }) {
           width:26, height:26, borderRadius:6, cursor:"pointer", fontSize:16, lineHeight:1 } }, "×")
       ),
       React.createElement('div', { className: "port-scroll", style: { overflow:"auto", flex:1 } },
-        React.createElement('table', { style: { width:"100%", borderCollapse:"separate", borderSpacing:0 } },
+        React.createElement('table', { className: "rec-table", style: { width:"100%", borderCollapse:"separate", borderSpacing:0 } },
           React.createElement('thead', null, React.createElement('tr', null,
             th("#", "center", 40), th("포트폴리오", "left"), th("투자액", "right", 100), th("회수액", "right", 100), th("원금", "right", 90), th("배당", "right", 90), th("MOIC", "right", 70)
           )),
@@ -937,7 +939,7 @@ function IssueModal({ item, onClose }) {
   const secColor = { active:"#4f46e5", closed:"#0f766e", impaired:"#6b7280" }[item._sec] || "#4f46e5";
   const info = [item.year ? item.year + "년" : null, item.cat, item.mgr ? "운용사 " + item.mgr : null, item.share, item.corp].filter(Boolean).join(" · ");
   const n1 = v => (v == null || v === 0 || isNaN(v)) ? "-" : fmt(Math.abs(v));
-  const stat = (l, v, c) => React.createElement('div', { style: { background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", minWidth:110 } },
+  const stat = (l, v, c) => React.createElement('div', { className: "issue-stat", style: { background:"#f8fafc", border:"1px solid #e2e8f0", borderRadius:8, padding:"6px 12px", minWidth:110 } },
     React.createElement('div', { style: { fontSize:12, color:"#64748b", fontWeight:700 } }, l),
     React.createElement('div', { style: { fontSize:17, fontWeight:800, color: c || "#1a1a2e" } }, v));
   return React.createElement('div', { onClick: onClose, style: { position:"fixed", inset:0, background:"rgba(15,20,45,0.55)", zIndex:1500,
@@ -1205,10 +1207,23 @@ function InvestmentDashboard() {
         .dash-body { padding: 12px 12px !important; }
         .dash-tabs { gap: 6px !important; margin-bottom: 16px !important; }
         .dash-tabs button { padding: 7px 10px !important; font-size: 12px !important; }
-        .dash-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
-        .kpi-face { padding: 6px 10px !important; }
-        .kpi-value { font-size: 16px !important; word-break: break-all !important; }
-        .kpi-sub { font-size: 10px !important; margin-top: 3px !important; }
+        .dash-main { overflow-x: hidden; }
+        .dash-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; margin-bottom: 8px !important; }
+        .kpi-card { min-width: 0 !important; display: flex !important; }
+        .kpi-flip-inner { flex: 1 1 auto; }
+        .kpi-front { height: 100%; }
+        /* 모바일: 카드는 배지 위·금액 아래 세로 배치, 플립(뒷면)은 쓰지 않음 */
+        .kpi-face { padding: 6px 8px !important; flex-direction: column !important; align-items: flex-start !important; gap: 3px !important; }
+        .kpi-back { display: none !important; }
+        .kpi-flip-inner.is-flipped, .kpi-card:hover .kpi-flip-inner { transform: none !important; }
+        .kpi-face > span:last-child:not(.kpi-value):not(.kpi-sub) { display: none !important; }
+        .kpi-value { font-size: 15px !important; white-space: nowrap !important; }
+        .kpi-sub { font-size: 9.5px !important; white-space: normal !important; line-height: 1.25 !important; overflow: visible !important; }
+        /* 모바일: 필터는 라벨 위·칩 아래로 세로 배치 */
+        .port-filter-row { flex-direction: column !important; align-items: stretch !important; gap: 4px !important; }
+        .port-flabel { margin-left: 0 !important; font-size: 12px !important; }
+        .port-chip-group { gap: 5px !important; padding: 4px 6px !important; }
+        .port-filter-row .port-search { width: 100% !important; flex: none !important; min-width: 0 !important; margin-top: 2px !important; }
         .dash-kpi-value { font-size: 16px !important; }
         .dash-kpi-sub { font-size: 10px !important; }
         .dash-two-col { grid-template-columns: 1fr !important; gap: 12px !important; }
@@ -1225,6 +1240,11 @@ function InvestmentDashboard() {
         td, th { padding: 6px 5px !important; }
         .port-table td, .port-table th { padding: 5px 6px !important; font-size: 11px !important; }
         .chart-wrap { height: 200px !important; }
+        /* 팝업(모바일): 회수내역은 가로로 밀어서 보고 이름 칸은 읽을 만큼 확보, 이슈 요약 타일은 3개씩 */
+        .rec-table { min-width: 520px; width: auto !important; }
+        .rec-table td:nth-child(2) { min-width: 170px; }
+        .rec-table th, .rec-table td { padding: 6px 8px !important; font-size: 12px !important; }
+        .issue-stat { min-width: 0 !important; flex: 1 1 28% !important; padding: 5px 8px !important; }
       }
     `)
       , showSettings && (
@@ -1307,14 +1327,14 @@ function InvestmentDashboard() {
           )
           , activeTab === "projects" && (
             React.createElement('div', { className: "port-filter-row", style: { display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" },}
-              , React.createElement('span', { style: { fontSize:14, color:"#111", fontWeight:800, whiteSpace:"nowrap" },}, "구분")
+              , React.createElement('span', { className: "port-flabel", style: { fontSize:14, color:"#111", fontWeight:800, whiteSpace:"nowrap" },}, "구분")
               , React.createElement('div', { className: "port-chip-group", style: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap",
                   background:"#d6e4f5", border:"1px solid #a9c3e3", padding:"5px 10px", borderRadius:8 },}
                 , [["all","전체"],["active","투자목록"],["closed","청산목록"],["impaired","손상목록"]].map(([v,l]) => (
                   React.createElement('button', { key: v, onClick: () => setPortSection(v), style: chipStyle(portSection===v),}, l)
                 ))
               )
-              , React.createElement('span', { style: { fontSize:14, color:"#111", fontWeight:800, marginLeft:10, whiteSpace:"nowrap" },}, "대분류")
+              , React.createElement('span', { className: "port-flabel", style: { fontSize:14, color:"#111", fontWeight:800, marginLeft:10, whiteSpace:"nowrap" },}, "대분류")
               , React.createElement('div', { className: "port-chip-group", style: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap",
                   background:"#d6e4f5", border:"1px solid #a9c3e3", padding:"5px 10px", borderRadius:8 },}
                 , [["all","전체"], ["year","연도별"], ["corp","법인별"], ...PORT_CATS.map(c => [c, c])].map(([v,l]) => (
