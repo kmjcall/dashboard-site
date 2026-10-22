@@ -614,7 +614,8 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
     };
     upd();
     window.addEventListener("resize", upd);
-    return () => window.removeEventListener("resize", upd);
+    const vv = window.visualViewport; if (vv) vv.addEventListener("resize", upd);
+    return () => { window.removeEventListener("resize", upd); if (vv) vv.removeEventListener("resize", upd); };
   }, [section, cat, search]);
   const updateEdge = () => {
     const el = scrollRef.current; if (!el) return;
@@ -1223,10 +1224,15 @@ function InvestmentDashboard() {
         .kpi-value { font-size: 15px !important; white-space: nowrap !important; }
         .kpi-sub { font-size: 9.5px !important; white-space: normal !important; line-height: 1.25 !important; overflow: visible !important; }
         /* 모바일: 필터는 라벨 위·칩 아래로 세로 배치 */
-        .port-filter-row { flex-direction: column !important; align-items: stretch !important; gap: 4px !important; }
+        html, body { height: 100%; overflow: hidden !important; overscroll-behavior: none; }
+        .dash-main { height: 100vh; height: 100dvh; min-height: 0 !important; overflow: hidden !important; }
+        .port-filter-row { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: center !important; gap: 4px 6px !important; }
         .port-flabel { margin-left: 0 !important; font-size: 12px !important; }
-        .port-chip-group { gap: 5px !important; padding: 4px 6px !important; }
-        .port-filter-row .port-search { width: 100% !important; flex: none !important; min-width: 0 !important; margin-top: 2px !important; }
+        .port-chip-group { gap: 5px !important; padding: 3px 6px !important; overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .port-chip-group::-webkit-scrollbar { display: none; }
+        .port-chip-group button { flex-shrink: 0 !important; white-space: nowrap !important; padding: 5px 10px !important; }
+        .port-scroll { overscroll-behavior: contain; }
+        .port-filter-row .port-search { width: 100% !important; flex: none !important; min-width: 0 !important; margin-top: 0 !important; grid-column: 1 / -1; padding: 5px 10px !important; }
         .dash-kpi-value { font-size: 16px !important; }
         .dash-kpi-sub { font-size: 10px !important; }
         .dash-two-col { grid-template-columns: 1fr !important; gap: 12px !important; }
