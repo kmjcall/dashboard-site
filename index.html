@@ -932,8 +932,17 @@ function RecoveryModal({ rows, title, onClose }) {
 function IssueModal({ item, onClose }) {
   const key = "inv_issue_" + (item._sec || "active") + "_" + item.no;
   const [text, setText] = useState(() => {
-    try { const v = localStorage.getItem(key); if (v != null && v !== "") return v; } catch (e) {}
-    return (item.issue || "");
+    const seed = item.issue || "";
+    let local = "";
+    try { local = localStorage.getItem(key) || ""; } catch (e) {}
+    if (!seed) return local;
+    // 배포본(seed)의 이슈가 새로 바뀌었으면 맨 위에 얹고, 이 브라우저에 직접 적은 내용은 한 줄 띄워 아래에 보존
+    const sig = seed.length + ":" + seed.slice(0, 40);
+    let seen = null; try { seen = localStorage.getItem(key + "_seed"); } catch (e) {}
+    if (seen === sig) return local || seed;
+    const merged = (local && local.indexOf(seed) < 0) ? seed + "\n\n" + local : (local || seed);
+    try { localStorage.setItem(key, merged); localStorage.setItem(key + "_seed", sig); } catch (e) {}
+    return merged;
   });
   const save = (v) => { setText(v); try { localStorage.setItem(key, v); } catch (e) {} };
   const hlRef = useRef(null);
