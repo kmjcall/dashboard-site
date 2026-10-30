@@ -950,10 +950,16 @@ function IssueModal({ item, onClose }) {
   const hlRef = useRef(null);
   const taBase = { borderRadius:8, padding:"10px 12px", fontSize:14, lineHeight:1.6, fontFamily:"inherit", boxSizing:"border-box", margin:0, letterSpacing:"normal" };
   // 날짜 줄(20261028 또는 ■ …업데이트)을 노란 형광펜으로 표시
-  const hlParts = (t) => String(t).split(/(\n)/).map((ln, i) =>
-    (/^\s*(20\d{6}|■.*)\s*$/.test(ln))
-      ? React.createElement('mark', { key: i, style: { background:"#fde047", color:"transparent", borderRadius:3 } }, ln)
-      : ln);
+  // 기업가치(Pre/Post Value) 문구는 주황 형광펜 — 예: "Value: Pre 600억 원", "Post 505억 원", "Pre Value 600억 원"
+  const VAL_RE = /((?:투자\s*)?(?:Value\s*:\s*)?(?:Pre|Post)(?:\s*-?\s*(?:Value|Money|밸류))?\s*:?\s*[\d,.]+\s*(?:조\s*[\d,.]*\s*)?억\s*원?|(?:기업가치|밸류에이션)\s*:?\s*[\d,.]+\s*(?:조\s*[\d,.]*\s*)?억\s*원?)/gi;
+  const hlParts = (t) => String(t).split(/(\n)/).map((ln, i) => {
+    if (/^\s*(20\d{6}|■.*)\s*$/.test(ln))
+      return React.createElement('mark', { key: i, style: { background:"#fde047", color:"transparent", borderRadius:3 } }, ln);
+    if (!VAL_RE.test(ln)) return ln;
+    VAL_RE.lastIndex = 0;
+    return React.createElement(React.Fragment, { key: i }, ln.split(VAL_RE).map((seg, j) => j % 2
+      ? React.createElement('mark', { key: j, style: { background:"#fdba74", color:"transparent", borderRadius:3 } }, seg) : seg));
+  });
   const secLabel = { active:"투자목록", closed:"청산목록", impaired:"손상목록" }[item._sec] || "투자목록";
   const secColor = { active:"#4f46e5", closed:"#0f766e", impaired:"#6b7280" }[item._sec] || "#4f46e5";
   const info = [item.year ? item.year + "년" : null, item.cat, item.mgr ? "운용사 " + item.mgr : null, item.share, item.corp].filter(Boolean).join(" · ");
