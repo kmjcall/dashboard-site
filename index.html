@@ -1246,7 +1246,7 @@ function InvestmentDashboard() {
 
   return (
     React.createElement('div', { style: { fontFamily:"'Noto Sans KR',sans-serif", background:"#f8f9fb", minHeight:"100vh" },}
-    , !loggedIn && React.createElement(LoginScreen, { onLogin: () => setLoggedIn(true),} )
+    , !loggedIn && React.createElement(LoginScreen, { onLogin: () => { setLoggedIn(true); [50, 200, 500].forEach(t => setTimeout(() => { const el = document.querySelector('.port-search'); if (el && document.activeElement !== el) el.focus(); }, t)); },} )
     , React.createElement('div', { className: loggedIn ? "dash-main" : "dash-main dash-locked", style: { minHeight:"100vh" },}
     , React.createElement('style', null, `
       * { box-sizing: border-box; }
