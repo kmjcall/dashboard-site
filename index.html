@@ -1412,14 +1412,14 @@ function InvestmentDashboard() {
               , React.createElement('div', { className: "port-chip-group", style: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap",
                   background:"#d6e4f5", border:"1px solid #a9c3e3", padding:"5px 10px", borderRadius:8 },}
                 , [["all","전체"],["active","투자목록"],["closed","청산목록"],["impaired","손상목록"]].map(([v,l]) => (
-                  React.createElement('button', { key: v, onClick: () => setPortSection(v), style: chipStyle(portSection===v),}, l)
+                  React.createElement('button', { key: v, onClick: () => { setPortSection(v); if (v === "all") { setPortCat("all"); setPortYear("all"); setPortSearch(""); } }, style: chipStyle(portSection===v),}, l)
                 ))
               )
               , React.createElement('span', { className: "port-flabel", style: { fontSize:14, color:"#111", fontWeight:800, marginLeft:10, whiteSpace:"nowrap" },}, "대분류")
               , React.createElement('div', { className: "port-chip-group", style: { display:"flex", gap:8, alignItems:"center", flexWrap:"wrap",
                   background:"#d6e4f5", border:"1px solid #a9c3e3", padding:"5px 10px", borderRadius:8 },}
                 , [["all","전체"], ["year","연도별"], ["corp","법인별"], ...PORT_CATS.map(c => [c, c])].map(([v,l]) => (
-                  React.createElement('button', { key: v, onClick: () => { setPortCat(v); setPortYear("all"); },
+                  React.createElement('button', { key: v, onClick: () => { setPortCat(v); setPortYear("all"); if (v === "all") { setPortSection("all"); setPortSearch(""); } },
                     style: (v === "year" || v === "corp")
                       ? { ...chipStyle(portCat===v), border:"2px solid #ef4444", fontWeight:700,
                           color: portCat===v ? "#fff" : "#dc2626", background: portCat===v ? "#dc2626" : "#fff5f5" }
