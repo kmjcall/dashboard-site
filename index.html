@@ -653,7 +653,7 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
       .filter(s => section === "all" || s.key === section)
       .reduce((acc, s) => acc.concat(s.rows.filter(matches).map(r => ({ ...r, _sec: s.key }))), []);
     const yKey = r => (r.year === "" || r.year == null) ? "미상" : String(r.year);
-    const years = [...new Set(pool.map(yKey))].sort();
+    const years = [...new Set(pool.map(yKey))].sort((a, b) => (a === "미상") - (b === "미상") || b.localeCompare(a)); // 최신 연도가 위로, 미상은 맨 아래
     sections = years
       .filter(y => year === "all" || y === year)
       .map(y => ({ key: "y" + y, label: y === "미상" ? "투자시기 미상" : y + "년", rows: pool.filter(r => yKey(r) === y), isYear: true }));
