@@ -554,6 +554,44 @@ const PORT_YR_YEARS = ["2016","2017","2018","2019","2020","2021","2022","2023","
 const PORT_YR_COLS = PORT_YR_YEARS.flatMap((y, yi) => ["출자","원금","배당"].map((h, j) => ({
   k: "yr" + y + "_" + j, h, w: 64, f: "num1", yr: y, j, yi })));
 const portYrVal = (r, c) => { const t = (r.yr || {})[c.yr]; const v = t ? Number(t[c.j]) || 0 : 0; return c.j === 0 ? -v : v; };
+// ── 포트폴리오검색: 사업명 우선 + 다른 칸·금액(숫자)·팝업 이슈 내용까지 ──────────
+// rank 0 = 사업명·투자대상, 1 = 운용사·법인·지분·연도·금액 등 다른 칸, 2 = 팝업 이슈 내용
+const PORT_NUM_KEYS = ["commit","invested","remain","rec","prin","div","unrec","val0","val1","sumOut","sumIn"];
+const portIssueText = (r, sk) => { let t = ""; try { t = localStorage.getItem("inv_issue_" + (r._sec || sk || "active") + "_" + r.no) || ""; } catch (e) {} return (r.issue || "") + "\n" + t; };
+const portParseNum = q => { const s = q.replace(/[,\s억원()]/g, "").replace(/^[-+]/, ""); return /^\d+(\.\d+)?$/.test(s) ? s : null; };
+const portNumHit = (v, ns) => {
+  if (v == null || v === "" || isNaN(v) || Number(v) === 0) return false;
+  const a = Math.abs(Number(v));
+  if (ns.includes(".")) return a.toFixed(ns.split(".")[1].length) === ns;          // 80.0 → 정확히 80.0
+  return Math.floor(Math.round(a * 10) / 10 + 1e-9) === Number(ns);              // 80 → 80.0~80.9
+};
+const portMatch = (r, q, sk) => {
+  if (!q) return { rank: 0, hits: {}, issue: false };
+  const has = v => String(v == null ? "" : v).toLowerCase().includes(q);
+  const ns = portParseNum(q);
+  const hits = {}; let rank = 9;
+  ["name","target"].forEach(k => { if (has(r[k])) { hits[k] = 1; rank = 0; } });
+  ["mgr","corp","share","cat","stake0","stake1"].forEach(k => { if (has(r[k])) { hits[k] = 1; rank = Math.min(rank, 1); } });
+  if (ns ? String(r.year) === ns : has(r.year)) { hits.year = 1; rank = Math.min(rank, 1); }
+  if (ns) {
+    PORT_NUM_KEYS.forEach(k => { if (portNumHit(r[k], ns)) { hits[k] = 1; rank = Math.min(rank, 1); } });
+    Object.keys(r.yr || {}).forEach(y => (r.yr[y] || []).forEach((v, j) => { if (portNumHit(v, ns)) { hits["yr" + y + "_" + j] = 1; rank = Math.min(rank, 1); } }));
+  }
+  let issue = false, snip = "";
+  const it = portIssueText(r, sk);
+  if (it.trim()) {
+    const esc = (ns || q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = ns ? new RegExp("(^|[^\\d.])" + esc + "(?!\\.?\\d)") : new RegExp(esc, "i");
+    const m = re.exec(it);
+    if (m) {
+      issue = true; rank = Math.min(rank, 2);
+      const at = m.index + (ns ? m[1].length : 0);
+      snip = it.slice(Math.max(0, at - 30), at + 50).replace(/\s+/g, " ").trim();
+    }
+  }
+  return rank === 9 ? null : { rank, hits, issue, snip };
+};
+const portRankSort = rows => rows.map((r, i) => [r, i]).sort((a, b) => (a[0]._m.rank - b[0]._m.rank) || (a[1] - b[1])).map(x => x[0]);
 const PORT_TABLE_WIDTH = PORT_COLS.reduce((s,c) => s + c.w, 0);
 const PORT_ALL_ROWS = SEED_PORTFOLIO.sections.reduce((acc,s) => acc.concat(s.rows), []);
 const PORT_CAT_ORDER = ["금융투자사","신사업","공간테크","부동산","기타법인","기타"];
@@ -596,8 +634,7 @@ const portVisibleRows = (section, cat, search) => {
     .reduce((acc, s) => acc.concat(s.rows.map(r => ({ ...r, _sec: s.key }))), [])
     .filter(r => {
       if (cat !== "all" && cat !== "year" && cat !== "corp" && r.cat !== cat) return false;
-      if (!q) return true;
-      return [r.name, r.target, r.mgr, r.corp, r.share].some(v => String(v || "").toLowerCase().includes(q));
+      return !!portMatch(r, q, r._sec);
     });
 };
 
@@ -630,18 +667,23 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
   };
   const q = (search || "").trim().toLowerCase();
   const byYear = cat === "year", byCorp = cat === "corp";
-  const matches = r => {
-    if (!byYear && !byCorp && cat !== "all" && r.cat !== cat) return false;
-    if (!q) return true;
-    return [r.name, r.target, r.mgr, r.corp, r.share].some(v => String(v || "").toLowerCase().includes(q));
+  // 검색 결과: 행마다 _m(일치 정보)을 붙이고, 사업명 일치 → 다른 칸·금액 일치 → 이슈 일치 순으로 정렬
+  const pick = (rows, sk) => {
+    const out = [];
+    rows.forEach(r => {
+      if (!byYear && !byCorp && cat !== "all" && r.cat !== cat) return;
+      const m = portMatch(r, q, sk); if (m) out.push({ ...r, _m: m });
+    });
+    return q ? portRankSort(out) : out;
   };
   const filtering = !!q || cat !== "all";
   let sections;
   if (byCorp) {
     // 투자법인별: 건수 많은 법인 순(같으면 가나다), 법인 칸이 비어 있으면 '미상'
-    const pool = SEED_PORTFOLIO.sections
+    let pool = SEED_PORTFOLIO.sections
       .filter(s => section === "all" || s.key === section)
-      .reduce((acc, s) => acc.concat(s.rows.filter(matches).map(r => ({ ...r, _sec: s.key }))), []);
+      .reduce((acc, s) => acc.concat(pick(s.rows, s.key).map(r => ({ ...r, _sec: s.key }))), []);
+    if (q) pool = portRankSort(pool);
     // 사명 변경 건은 같은 회사로 묶음(표의 투자법인 칸 값은 엑셀 그대로 둠)
     const CORP_SAME = { "우미산업개발(선우산업)": "우미산업개발" };
     const cKey = r => { const c = String(r.corp || "").trim(); return c ? (CORP_SAME[c] || c) : "미상"; };
@@ -649,9 +691,10 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
     const corps = Object.keys(cnt).sort((a, b) => (cnt[b] - cnt[a]) || a.localeCompare(b, "ko"));
     sections = corps.map(c => ({ key: "c" + c, label: c, rows: pool.filter(r => cKey(r) === c), isYear: true }));
   } else if (byYear) {
-    const pool = SEED_PORTFOLIO.sections
+    let pool = SEED_PORTFOLIO.sections
       .filter(s => section === "all" || s.key === section)
-      .reduce((acc, s) => acc.concat(s.rows.filter(matches).map(r => ({ ...r, _sec: s.key }))), []);
+      .reduce((acc, s) => acc.concat(pick(s.rows, s.key).map(r => ({ ...r, _sec: s.key }))), []);
+    if (q) pool = portRankSort(pool);
     const yKey = r => (r.year === "" || r.year == null) ? "미상" : String(r.year);
     const years = [...new Set(pool.map(yKey))].sort((a, b) => (a === "미상") - (b === "미상") || b.localeCompare(a)); // 최신 연도가 위로, 미상은 맨 아래
     sections = years
@@ -660,10 +703,28 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
   } else {
     sections = SEED_PORTFOLIO.sections
       .filter(s => section === "all" || s.key === section)
-      .map(s => ({ ...s, rows: s.rows.filter(matches) }))
+      .map(s => ({ ...s, rows: pick(s.rows, s.key) }))
       .filter(s => !filtering || s.rows.length > 0);
   }
   const totalRows = sections.reduce((s, sec) => s + sec.rows.length, 0);
+  // 숫자 검색으로 금액 칸이 일치했는데 화면 밖(오른쪽)에 있으면, 가장 왼쪽 일치 칸이 보이도록 표를 가로로 이동
+  useEffect(() => {
+    const el = scrollRef.current; if (!el || !q) return;
+    // 표 위쪽부터 보아 처음으로 칸이 일치한 행의 가장 왼쪽 일치 칸 기준
+    let best = -1;
+    sections.forEach(sec => sec.rows.forEach(r => {
+      if (best >= 0) return;
+      const h = (r._m && r._m.hits) || {};
+      best = COLS.findIndex(c => c.left == null && (c.yr ? h["yr" + c.yr + "_" + c.j] : h[c.k]));
+    }));
+    if (best < 0) return;
+    const fixedW = COLS.filter(c => c.left != null).reduce((s, c) => s + c.w, 0);
+    const x = COLS.slice(0, best).reduce((s, c) => s + c.w, 0);
+    if (x < el.scrollLeft + fixedW || x + COLS[best].w > el.scrollLeft + el.clientWidth) {
+      el.scrollTo({ left: Math.max(0, x - fixedW - 40), behavior: "smooth" });
+      setTimeout(updateEdge, 400);
+    }
+  }, [search, section, cat]);
 
   const COL_H = 40;
   const thCol = (c) => ({ height:COL_H, padding:"0 8px", background:"#1a1a2e", color:"#fff", fontSize:12, fontWeight:700,
@@ -705,9 +766,16 @@ function PortfolioTable({ section, cat, search, year, onRowClick }) {
               r._sec === "closed" ? "청산" : "손상")
           : null;
         const isStratNo = c.k === "no" && r.strategic;
+        // 검색어와 일치한 칸은 노란색 표시, 팝업 이슈 내용이 일치하면 사업명 옆에 '이슈' 표시(마우스를 올리면 해당 부분)
+        const m = q && r._m;
+        const hit = m && (c.yr ? m.hits["yr" + c.yr + "_" + c.j] : m.hits[c.k]);
+        const issueTag = (c.k === "name" && m && m.issue)
+          ? React.createElement('span', { title: "이슈 내용 일치: …" + m.snip + "…", style: { display:"inline-block", fontSize:10, fontWeight:700, padding:"1px 5px", borderRadius:4, marginRight:6,
+              background:"#00529b", color:"#fff", verticalAlign:"1px" } }, "이슈")
+          : null;
         return React.createElement('td', { key: c.k,
           title: isStratNo ? "전략자산" : ((c.k === "name" || c.k === "target") && txt ? txt : undefined),
-          style: tdStyle(c, isStratNo ? "#d9dde3" : bg, { color: portCellColor(c, v), fontWeight: c.k === "name" ? 600 : (isStratNo ? 700 : 400) }) }, tag, txt);
+          style: tdStyle(c, hit ? "#fff3a3" : (isStratNo ? "#d9dde3" : bg), { color: portCellColor(c, v), fontWeight: (c.k === "name" || hit) ? (hit && c.k !== "name" ? 800 : 600) : (isStratNo ? 700 : 400) }) }, tag, issueTag, txt);
       })
     );
   };
@@ -1429,7 +1497,7 @@ function InvestmentDashboard() {
                 ))
               )
               , React.createElement('input', { className: "port-search", value: portSearch, onChange: e => setPortSearch(e.target.value),
-                placeholder: "🔍 포트폴리오검색",
+                placeholder: "🔍 포트폴리오검색", title: "사업명·투자대상 우선 → 운용사·투자법인·연도·금액(예: 80 → 80.0억)·팝업 이슈 내용까지 검색",
                 style: { marginLeft:"auto", padding:"7px 12px", borderRadius:8, border:"2px solid #00529b", fontSize:13, fontWeight:600,
                   outline:"none", flex:"0 1 200px", minWidth:130, width:200, background:"#eaf2fb", color:"#1a1a2e",
                   boxShadow:"0 0 0 3px rgba(0,82,155,0.15)" },} )
