@@ -557,7 +557,7 @@ const portYrVal = (r, c) => { const t = (r.yr || {})[c.yr]; const v = t ? Number
 // ── 포트폴리오검색: 사업명 우선 + 다른 칸·금액(숫자)·팝업 이슈 내용까지 ──────────
 // rank 0 = 사업명·투자대상, 1 = 운용사·법인·지분·연도·금액 등 다른 칸, 2 = 팝업 이슈 내용
 const portIssueText = (r, sk) => { let t = ""; try { t = localStorage.getItem("inv_issue_" + (r._sec || sk || "active") + "_" + r.no) || ""; } catch (e) {} return (r.issue || "") + "\n" + t; };
-const portParseNum = q => { const s = q.replace(/[,\s억원()%]/g, "").replace(/^[-+]/, ""); return /^\d+(\.\d+)?$/.test(s) ? s : null; };
+const portParseNum = q => { const s = q.replace(/[,\s억원()%배주]/g, "").replace(/^[-+]/, ""); return /^\d+(\.\d+)?$/.test(s) ? s : null; };
 const portNumHit = (v, ns) => {
   if (v == null || v === "" || isNaN(v) || Number(v) === 0) return false;
   const a = Math.abs(Number(v));
@@ -587,12 +587,21 @@ const portMatch = (r, q, sk) => {
   let issue = false, snip = "";
   const it = portIssueText(r, sk);
   if (it.trim()) {
-    const esc = (ns || q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const re = ns ? new RegExp("(^|[^\\d.])" + esc + "(?!\\.?\\d)") : new RegExp(esc, "i");
-    const m = re.exec(it);
-    if (m) {
+    let at = -1;
+    if (ns) {
+      // 팝업 이슈 본문(글·표)의 숫자도 표와 같은 규칙으로 비교: 쉼표 무시(1,234 = 1234), 80 → 80·80.0·80.5 일치, '%'를 붙이면 % 붙은 숫자만
+      const pct = q.includes("%");
+      const numRe = /\d[\d,]*(?:\.\d+)?/g; let mm;
+      while ((mm = numRe.exec(it))) {
+        if (mm.index > 0 && /[\d.]/.test(it[mm.index - 1])) continue;
+        if (pct && !/^\s*%/.test(it.slice(mm.index + mm[0].length))) continue;
+        if (portNumHit(Number(mm[0].replace(/,/g, "")), ns)) { at = mm.index; break; }
+      }
+    } else {
+      at = it.toLowerCase().indexOf(q);
+    }
+    if (at >= 0) {
       issue = true; rank = Math.min(rank, 2);
-      const at = m.index + (ns ? m[1].length : 0);
       snip = it.slice(Math.max(0, at - 30), at + 50).replace(/\s+/g, " ").trim();
     }
   }
