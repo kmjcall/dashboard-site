@@ -556,9 +556,8 @@ const PORT_YR_COLS = PORT_YR_YEARS.flatMap((y, yi) => ["출자","원금","배당
 const portYrVal = (r, c) => { const t = (r.yr || {})[c.yr]; const v = t ? Number(t[c.j]) || 0 : 0; return c.j === 0 ? -v : v; };
 // ── 포트폴리오검색: 사업명 우선 + 다른 칸·금액(숫자)·팝업 이슈 내용까지 ──────────
 // rank 0 = 사업명·투자대상, 1 = 운용사·법인·지분·연도·금액 등 다른 칸, 2 = 팝업 이슈 내용
-const PORT_NUM_KEYS = ["commit","invested","remain","rec","prin","div","unrec","val0","val1","sumOut","sumIn"];
 const portIssueText = (r, sk) => { let t = ""; try { t = localStorage.getItem("inv_issue_" + (r._sec || sk || "active") + "_" + r.no) || ""; } catch (e) {} return (r.issue || "") + "\n" + t; };
-const portParseNum = q => { const s = q.replace(/[,\s억원()]/g, "").replace(/^[-+]/, ""); return /^\d+(\.\d+)?$/.test(s) ? s : null; };
+const portParseNum = q => { const s = q.replace(/[,\s억원()%]/g, "").replace(/^[-+]/, ""); return /^\d+(\.\d+)?$/.test(s) ? s : null; };
 const portNumHit = (v, ns) => {
   if (v == null || v === "" || isNaN(v) || Number(v) === 0) return false;
   const a = Math.abs(Number(v));
@@ -572,10 +571,18 @@ const portMatch = (r, q, sk) => {
   const hits = {}; let rank = 9;
   ["name","target"].forEach(k => { if (has(r[k])) { hits[k] = 1; rank = 0; } });
   ["mgr","corp","share","cat","stake0","stake1"].forEach(k => { if (has(r[k])) { hits[k] = 1; rank = Math.min(rank, 1); } });
-  if (ns ? String(r.year) === ns : has(r.year)) { hits.year = 1; rank = Math.min(rank, 1); }
+  if (!ns && has(r.year)) { hits.year = 1; rank = Math.min(rank, 1); }
   if (ns) {
-    PORT_NUM_KEYS.forEach(k => { if (portNumHit(r[k], ns)) { hits[k] = 1; rank = Math.min(rank, 1); } });
-    Object.keys(r.yr || {}).forEach(y => (r.yr[y] || []).forEach((v, j) => { if (portNumHit(v, ns)) { hits["yr" + y + "_" + j] = 1; rank = Math.min(rank, 1); } }));
+    // 숫자 검색: 표에 '보이는 그대로'의 숫자와 비교(금액 80.0, 회수율 6.0%, MOIC 0.25, 지분 31.25%, 벨류 3,100, 연도 2017 등)
+    // '%'를 붙이면 % 칸(회수율·지분)만 찾음
+    const pct = q.includes("%");
+    PORT_COLS.concat(PORT_YR_COLS).forEach(c => {
+      if (c.k === "no" || c.k === "name" || c.k === "target") return;
+      const txt = (portFmt[c.f || "text"])(c.yr ? portYrVal(r, c) : r[c.k]);
+      if (!txt || (pct && !txt.includes("%"))) return;
+      const nums = String(txt).replace(/,/g, "").match(/\d+(\.\d+)?/g) || [];
+      if (nums.some(n => portNumHit(Number(n), ns))) { hits[c.k] = 1; rank = Math.min(rank, 1); }
+    });
   }
   let issue = false, snip = "";
   const it = portIssueText(r, sk);
@@ -1497,7 +1504,7 @@ function InvestmentDashboard() {
                 ))
               )
               , React.createElement('input', { className: "port-search", value: portSearch, onChange: e => setPortSearch(e.target.value),
-                placeholder: "🔍 포트폴리오검색", title: "사업명·투자대상 우선 → 운용사·투자법인·연도·금액(예: 80 → 80.0억)·팝업 이슈 내용까지 검색",
+                placeholder: "🔍 포트폴리오검색", title: "사업명·투자대상 우선 → 운용사·투자법인·연도·금액(예: 80 → 80.0억)·회수율·MOIC·지분(예: 6.0%)·팝업 이슈 내용까지 검색",
                 style: { marginLeft:"auto", padding:"7px 12px", borderRadius:8, border:"2px solid #00529b", fontSize:13, fontWeight:600,
                   outline:"none", flex:"0 1 200px", minWidth:130, width:200, background:"#eaf2fb", color:"#1a1a2e",
                   boxShadow:"0 0 0 3px rgba(0,82,155,0.15)" },} )
